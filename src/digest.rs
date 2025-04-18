@@ -1,5 +1,5 @@
 use core::fmt::Debug;
-
+use crate::OutputSize;
 /// Error kind.
 ///
 /// This represents a common set of digest operation errors. Implementations are
@@ -62,10 +62,11 @@ pub trait ErrorType {
     type Error: Error;
 }
 
-pub trait Digest: ErrorType {
-    type InitParams;
+pub trait Digest: ErrorType + OutputSize {
+    type InitParams<'a>; // use GAT here to allow for the trait user to add a reference to a peripheral with a specified lifetime.
+    
 
-    /// Init instance of the crypto function with the given context.
+    /// Init instance of the Digest type with the given context.
     ///
     /// # Parameters
     ///
@@ -74,7 +75,7 @@ pub trait Digest: ErrorType {
     /// # Returns
     ///
     /// A new instance of the hash function.    
-    fn init(init_params: Self::InitParams) -> Result<(), Self::Error>;
+    fn init(init_params: Self::InitParams<'_>) -> Result<(), Self::Error>;
 
     /// Update state using provided input data.
     ///
@@ -85,7 +86,7 @@ pub trait Digest: ErrorType {
     /// # Returns
     ///
     /// A `Result` indicating success or failure. On success, returns `Ok(())`. On failure, returns a `CryptoError`.    
-    fn update(&mut self, input: &mut [u8]) -> Result<(), Self::Error>;
+    fn update(&mut self, input: &[u8]) -> Result<(), Self::Error>;
 
     /// Reset instance to its initial state.
     ///

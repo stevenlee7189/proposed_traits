@@ -1,5 +1,8 @@
 use core::fmt::Debug;
 
+use crate::OutputSize;
+
+
 pub trait Error: core::fmt::Debug {
     /// Convert error to a generic error kind
     ///
@@ -29,18 +32,15 @@ pub enum ErrorKind {
     Other,
 }
 
-pub trait HashMarker {
-    fn size() -> usize;
-}
-
 pub trait EcdsaCurve {
     fn id() -> u32;
 }
 
 pub trait EcdsaTypes {
-    type PrivateKey;
-    type PublicKey;
-    type Signature;
+    type PrivateKey : crate::Serde;
+    type PublicKey : crate::Serde;
+    type Message : OutputSize + crate::Serde;
+    type Signature : crate::Serde;
     type Curve: EcdsaCurve;
 }
 
@@ -65,10 +65,7 @@ pub trait EcdsaKeyGen: ErrorType + EcdsaTypes {
 /// Trait for ECDSA signing.
 ///
 /// This trait defines the methods required for signing messages using ECDSA.
-pub trait EcdsaSign: ErrorType {
-    type PrivateKey;
-    type Curve: EcdsaCurve;
-    type Signature;
+pub trait EcdsaSign: ErrorType + EcdsaTypes{
 
     /// Signs a message hash using the private key and elliptic curve.
     ///
@@ -79,20 +76,17 @@ pub trait EcdsaSign: ErrorType {
     ///
     /// # Returns
     /// A result containing the generated signature, or an error.    
-    fn sign<H: HashMarker>(
+    fn sign(
         curve: &Self::Curve,
         private_key: &Self::PrivateKey,
-        message_hash: impl AsRef<[u8]>,
+        message: Self::Message,
     ) -> Result<Self::Signature, Self::Error>;
 }
 
 /// Trait for ECDSA verification.
 ///
 /// This trait defines the methods required for verifying ECDSA signatures.
-pub trait EcdsaVerify: ErrorType {
-    type PublicKey;
-    type Curve: EcdsaCurve;
-    type Signature;
+pub trait EcdsaVerify: ErrorType + EcdsaTypes {
 
     /// Verifies an ECDSA signature.
     ///
@@ -104,10 +98,10 @@ pub trait EcdsaVerify: ErrorType {
     ///
     /// # Returns
     /// A result indicating whether the signature is valid, or an error.    
-    fn verify<H: HashMarker>(
+    fn verify(
         curve: &Self::Curve,
         public_key: &Self::PublicKey,
-        message_hash: impl AsRef<[u8]>,
+        message: Self::Message,
         signature: &Self::Signature,
     ) -> Result<(), Self::Error>;
 }
