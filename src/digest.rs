@@ -1,5 +1,5 @@
+use crate::serde::OutputSize;
 use core::fmt::Debug;
-use crate::OutputSize;
 /// Error kind.
 ///
 /// This represents a common set of digest operation errors. Implementations are
@@ -64,7 +64,6 @@ pub trait ErrorType {
 
 pub trait Digest: ErrorType + OutputSize {
     type InitParams<'a>; // use GAT here to allow for the trait user to add a reference to a peripheral with a specified lifetime.
-    
 
     /// Init instance of the Digest type with the given context.
     ///

@@ -42,15 +42,13 @@ pub trait RsaKeys {
 
 pub trait RsaSignature {
     type Signature;
-}    
-
+}
 
 pub trait RsaKeyGen: ErrorType + RsaKeys {
     fn generate_keys(bits: RsaSize) -> Result<(Self::PrivateKey, Self::PublicKey), Self::Error>;
 }
 
 pub trait RsaSign: ErrorType + RsaKeys + RsaSignature {
-
     fn sign(
         &self,
         private_key: &Self::PrivateKey,
@@ -60,7 +58,6 @@ pub trait RsaSign: ErrorType + RsaKeys + RsaSignature {
 }
 
 pub trait RsaVerify: ErrorType + RsaKeys + RsaSignature {
-
     fn verify(
         &self,
         public_key: &Self::PublicKey,

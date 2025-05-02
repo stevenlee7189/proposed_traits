@@ -1,7 +1,6 @@
-
 // common.rs
 
-pub trait Error: core::fmt::Debug {
+pub trait SerdeError: core::fmt::Debug {
     /// Convert error to a generic error kind
     ///
     /// By using this method, errors freely defined by HAL implementations
@@ -12,7 +11,7 @@ pub trait Error: core::fmt::Debug {
 
 pub trait ErrorType {
     /// Error type.
-    type Error: Error;
+    type Error: SerdeError;
 }
 
 /// Error kind.
@@ -24,15 +23,15 @@ pub trait ErrorType {
 #[non_exhaustive]
 pub enum ErrorKind {
     NotSupported,
-}    
-
+    SourceBufferTooSmall,
+}
 
 pub trait OutputSize {
     const OUTPUT_SIZE: usize;
 }
 
-pub trait Serde : ErrorType {
+pub trait Serde: ErrorType {
     type OutputType;
-    fn to_le_bytes(&self, dest: &mut [u8]) -> Result<(),Self::Error>;
-    fn from_bytes_le(bytes: &[u8]) -> Result <Self::OutputType, Self::Error>;
+    fn to_le_bytes(&self, dest: &mut [u8]) -> Result<(), Self::Error>;
+    fn from_bytes_le(bytes: &[u8]) -> Result<Self::OutputType, Self::Error>;
 }

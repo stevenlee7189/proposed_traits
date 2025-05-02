@@ -7,4 +7,6 @@ edition = "2021"
 embedded-hal = "1"
 embedded-hal-bus = "0.3"
 drivers = { path = "../drivers"}
+peripheral-traits = { path = ".." }
 rand = "0.8"
+rand_core = "0.6"

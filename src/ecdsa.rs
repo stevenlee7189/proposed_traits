@@ -1,7 +1,5 @@
 use core::fmt::Debug;
-
-use crate::OutputSize;
-
+use rand_core::{CryptoRng, RngCore};
 
 pub trait Error: core::fmt::Debug {
     /// Convert error to a generic error kind
@@ -33,36 +31,36 @@ pub enum ErrorKind {
 }
 
 
-pub trait EcdsaTypes {
-    type PrivateKey : crate::Serde;
-    type PublicKey : crate::Serde;
-    type Message : OutputSize + crate::Serde;
-    type Signature : crate::Serde;
-    type Curve;
-}
 
 
 /// Trait for ECDSA key generation.
 ///
 /// This trait defines the methods required for generating ECDSA key pairs.
-pub trait EcdsaKeyGen: ErrorType + EcdsaTypes {
+pub trait EcdsaKeyGen: ErrorType  {
+    type PrivateKeyOut<'a> where Self: 'a;
+    type PublicKey;
 
     /// Generates an ECDSA key pair.
     ///
     /// # Parameters
-    /// - `curve`: The elliptic curve to use for key generation.
+    /// - `rng`: The entropy source.
     ///
     /// # Returns
     /// A result containing the generated private and public keys, or an error.    
-    fn generate_key_pair(
-        curve: &Self::Curve,
-    ) -> Result<(Self::PrivateKey, Self::PublicKey), Self::Error>;
+    fn generate_key_pair<R: RngCore + CryptoRng>( 
+        &mut self,
+        rng: R,
+    ) -> Result<(Self::PrivateKeyOut<'_>, Self::PublicKey), Self::Error>;
+        
 }
 
 /// Trait for ECDSA signing.
 ///
 /// This trait defines the methods required for signing messages using ECDSA.
-pub trait EcdsaSign: ErrorType + EcdsaTypes{
+pub trait EcdsaSign: ErrorType  {
+    type PrivateKeyIn<'a>;
+    type Message;
+    type Signature;
 
     /// Signs a message hash using the private key and elliptic curve.
     ///
@@ -73,17 +71,24 @@ pub trait EcdsaSign: ErrorType + EcdsaTypes{
     ///
     /// # Returns
     /// A result containing the generated signature, or an error.    
-    fn sign(
-        curve: &Self::Curve,
-        private_key: &Self::PrivateKey,
+    fn sign<R>(
+        &mut self,
+        private_key: &Self::PrivateKeyIn<'_>,
         message: Self::Message,
-    ) -> Result<Self::Signature, Self::Error>;
+        rng: R,
+    ) -> Result<Self::Signature, Self::Error>    
+    where
+        R: RngCore + CryptoRng;
+
 }
 
 /// Trait for ECDSA verification.
 ///
 /// This trait defines the methods required for verifying ECDSA signatures.
-pub trait EcdsaVerify: ErrorType + EcdsaTypes {
+pub trait EcdsaVerify: ErrorType {
+    type PublicKey;
+    type Message;
+    type Signature;
 
     /// Verifies an ECDSA signature.
     ///
@@ -96,10 +101,9 @@ pub trait EcdsaVerify: ErrorType + EcdsaTypes {
     /// # Returns
     /// A result indicating whether the signature is valid, or an error.    
     fn verify(
-        curve: &Self::Curve,
+        &mut self,
         public_key: &Self::PublicKey,
         message: Self::Message,
         signature: &Self::Signature,
     ) -> Result<(), Self::Error>;
 }
-
