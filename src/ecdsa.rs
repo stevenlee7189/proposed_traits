@@ -32,16 +32,13 @@ pub enum ErrorKind {
     Other,
 }
 
-pub trait EcdsaCurve {
-    fn id() -> u32;
-}
 
 pub trait EcdsaTypes {
     type PrivateKey : crate::Serde;
     type PublicKey : crate::Serde;
     type Message : OutputSize + crate::Serde;
     type Signature : crate::Serde;
-    type Curve: EcdsaCurve;
+    type Curve;
 }
 
 
