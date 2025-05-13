@@ -1,8 +1,11 @@
-[package]
-name = "peripheral-traits"
-version = "0.1.0"
-edition = "2021"
+[workspace]
+members = [
+    "proposed-traits",
+    "simulation",
+]
 
-[dependencies]
-embedded-storage = "0.3.1"
-rand_core = "0.6"
+[profile.dev]
+opt-level = 0
+
+[profile.release]
+opt-level = 3

@@ -1,9 +1,9 @@
 use core::fmt::Debug;
 use rand_core::{CryptoRng, RngCore};
-use peripheral_traits::ecdsa::{EcdsaSign, EcdsaVerify, EcdsaKeyGen};
-use peripheral_traits::ecdsa::Error as EcdsaError;
-use peripheral_traits::ecdsa::ErrorKind as EcdsaErrorKind;
-
+use proposed_traits::ecdsa::{EcdsaSign, EcdsaVerify, EcdsaKeyGen};
+use proposed_traits::ecdsa::Error as EcdsaError;
+use proposed_traits::ecdsa::ErrorKind as EcdsaErrorKind;
+use proposed_traits::ecdsa::ErrorType as EcdsaErrorType;
 
 
 
@@ -20,7 +20,7 @@ impl EcdsaError for MyEcdsaError {
 /// Concrete type implementing ECDSA traits.
 pub struct MyEcdsa;
 
-impl peripheral_traits::ecdsa::ErrorType for MyEcdsa {
+impl EcdsaErrorType for MyEcdsa {
     type Error = MyEcdsaError;
 }
 
