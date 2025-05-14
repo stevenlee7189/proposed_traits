@@ -29,7 +29,7 @@ impl EcdsaErrorType for MyEcdsa {
 /// This trait defines the methods required for generating ECDSA key pairs.
 impl EcdsaKeyGen for MyEcdsa {
     type PrivateKeyOut<'a> = &'a [u8];
-    type PublicKey = Vec<u8>;
+    type PublicKeyOut<'a> = Vec<u8>;
 
     /// Generates an ECDSA key pair.
     ///
@@ -38,16 +38,19 @@ impl EcdsaKeyGen for MyEcdsa {
     ///
     /// # Returns
     /// A result containing the generated private and public keys, or an error.
-    fn generate_key_pair<R>(
+    fn generate_key_pair<R: RngCore + CryptoRng>( 
         &mut self,
-        _rng: R,
-    ) -> Result<(Self::PrivateKeyOut<'_>, Self::PublicKey), Self::Error> 
-    where R : RngCore + CryptoRng
-    {
+        rng: R,
+        priv_key: &mut Self::PrivateKeyOut<'_>,
+        pub_key: &mut Self::PublicKeyOut<'_>,
+    ) -> Result<(), Self::Error> {
         // Key generation logic here
-        Ok((&[0u8; 32], vec![0u8; 64]))
+        *priv_key = &[0u8; 32]; // Example private key
+        *pub_key = vec![0u8; 64]; // Example public key
+        Ok(())
     }
 }
+ 
 
 /// Trait for ECDSA signing.
 ///

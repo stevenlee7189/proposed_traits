@@ -38,7 +38,7 @@ pub enum ErrorKind {
 /// This trait defines the methods required for generating ECDSA key pairs.
 pub trait EcdsaKeyGen: ErrorType  {
     type PrivateKeyOut<'a> where Self: 'a;
-    type PublicKey;
+    type PublicKeyOut<'a>: where Self: 'a;
 
     /// Generates an ECDSA key pair.
     ///
@@ -50,7 +50,9 @@ pub trait EcdsaKeyGen: ErrorType  {
     fn generate_key_pair<R: RngCore + CryptoRng>( 
         &mut self,
         rng: R,
-    ) -> Result<(Self::PrivateKeyOut<'_>, Self::PublicKey), Self::Error>;
+        priv_key: &mut Self::PrivateKeyOut<'_>,
+        pub_key: &mut Self::PublicKeyOut<'_>,
+    ) -> Result<(), Self::Error>;
         
 }
 
