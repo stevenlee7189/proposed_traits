@@ -1,5 +1,8 @@
 use crate::serde::OutputSize;
 use core::fmt::Debug;
+
+use async_trait::async_trait;
+
 /// Error kind.
 ///
 /// This represents a common set of digest operation errors. Implementations are
@@ -63,6 +66,53 @@ pub trait ErrorType {
 }
 
 pub trait Digest: ErrorType + OutputSize {
+    type InitParams<'a>; // use GAT here to allow for the trait user to add a reference to a peripheral with a specified lifetime.
+
+    /// Init instance of the Digest type with the given context.
+    ///
+    /// # Parameters
+    ///
+    /// - `init_params`: The context or configuration parameters for the crypto function.
+    ///
+    /// # Returns
+    ///
+    /// A new instance of the hash function.    
+    fn init(init_params: Self::InitParams<'_>) -> Result<(), Self::Error>;
+
+    /// Update state using provided input data.
+    ///
+    /// # Parameters
+    ///
+    /// - `input`: The input data to be hashed. This can be any type that implements `AsRef<[u8]>`.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` indicating success or failure. On success, returns `Ok(())`. On failure, returns a `CryptoError`.    
+    fn update(&mut self, input: &[u8]) -> Result<(), Self::Error>;
+
+    /// Reset instance to its initial state.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` indicating success or failure. On success, returns `Ok(())`. On failure, returns a `CryptoError`.    
+    fn reset(&mut self) -> Result<(), Self::Error>;
+
+    /// Finalize the computation and produce the output.
+    ///
+    /// # Parameters
+    ///
+    /// - `out`: A mutable slice to store the hash output. The length of the slice must be at least `MAX_OUTPUT_SIZE`.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` indicating success or failure. On success, returns `Ok(())`. On failure, returns a `CryptoError`.    
+    fn finalize(&mut self, out: &mut [u8]) -> Result<(), Self::Error>;
+}
+
+
+
+#[async_trait]
+pub trait AsyncDigest: ErrorType + OutputSize {
     type InitParams<'a>; // use GAT here to allow for the trait user to add a reference to a peripheral with a specified lifetime.
 
     /// Init instance of the Digest type with the given context.
