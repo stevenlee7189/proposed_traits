@@ -1,4 +1,3 @@
-use crate::serde::Serde;
 
 /// Error kind.
 ///
@@ -27,7 +26,7 @@ pub enum ErrorKind {
     FinalizationError,
 
     /// The hardware accelerator is busy and cannot process the hash computation.
-    HardwareAcceleratorBusy,
+    Busy,
 
     /// General hardware failure during hash computation.
     HardwareFailure,
@@ -35,11 +34,11 @@ pub enum ErrorKind {
     /// The specified output size is not valid for the hash function.
     InvalidOutputSize,
 
-    /// Insufficient permissions to access the hardware or perform the hash computation.
+    /// Insufficient permissions to access the hardware or perform the Mac computation.
     PermissionDenied,
 
-    /// The hash computation context has not been initialized.
-    NotInitialized,
+    /// The Mac operation context has not been initialized.
+    InvalidState,
 }
 
 pub trait Error: core::fmt::Debug {
@@ -67,11 +66,20 @@ pub trait ErrorType {
     type Error: Error;
 }
 
-/// Message Authentication algorithm
-pub trait Mac: ErrorType {
-    type InitParams<'a> : where Self: 'a;
+pub trait McCtrlReset: ErrorType {
+    /// Reset instance to its initial state.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` indicating success or failure. On success, returns `Ok(())`. On failure, returns a `CryptoError`.    
+    fn reset(&mut self) -> Result<(), Self::Error>;
 
-    type Key<'a>: Serde where Self: 'a;
+}
+
+pub trait MacCtrl: ErrorType {
+    type InitParams<'a>: where Self: 'a;
+    type OpContext<'a>: MacOp where Self: 'a;
+
     /// Init instance of the crypto function with the given context.
     ///
     /// # Parameters
@@ -80,19 +88,15 @@ pub trait Mac: ErrorType {
     ///
     /// # Returns
     ///
-    /// A new instance of the hash function.    
-    fn init(init_params: Self::InitParams<'_>) -> Result<(), Self::Error>;
+    /// A new instance of the hash function.
+    fn init<'a>(&'a mut self, init_params: Self::InitParams<'a>) -> Result<Self::OpContext<'a>, Self::Error>;
 
-    /// Sets the key for the HMAC algorithm.
-    ///
-    /// # Parameters
-    ///
-    /// - `key`: The key to be used for HMAC.
-    ///
-    /// # Returns
-    ///
-    /// A `Result` indicating success or failure. On success, returns `Ok(())`. On failure, returns an error of type `Self::Error`.
-    fn set_key(&mut self, key: Self::Key<'_>) -> Result<(), Self::Error>;
+
+}
+
+/// Message Authentication algorithm
+pub trait MacOp: ErrorType {
+
 
     /// Update state using provided input data.
     ///
@@ -105,12 +109,6 @@ pub trait Mac: ErrorType {
     /// A `Result` indicating success or failure. On success, returns `Ok(())`. On failure, returns a `CryptoError`.    
     fn update(&mut self, input: &[u8]) -> Result<(), Self::Error>;
 
-    /// Reset instance to its initial state.
-    ///
-    /// # Returns
-    ///
-    /// A `Result` indicating success or failure. On success, returns `Ok(())`. On failure, returns a `CryptoError`.    
-    fn reset(&mut self) -> Result<(), Self::Error>;
 
     /// Finalize the computation and produce the output.
     ///
@@ -121,16 +119,6 @@ pub trait Mac: ErrorType {
     /// # Returns
     ///
     /// A `Result` indicating success or failure. On success, returns `Ok(())`. On failure, returns a `CryptoError`.    
-    fn finalize(&mut self, out: &mut [u8]) -> Result<(), Self::Error>;
+    fn finalize(&mut self, tag: &mut [u8]) -> Result<(), Self::Error>;
 
-    /// Verifies if the given MAC tag matches the expected result.
-    ///
-    /// # Parameters
-    ///
-    /// - `tag`: The MAC tag to be verified.
-    ///
-    /// # Returns
-    ///
-    /// A `Result` indicating success or failure. On success, returns `Ok(())`. On failure, returns an error of type `Self::Error`.    
-    fn verify(&mut self, tag: &[u8]) -> Result<(), Self::Error>;
 }
