@@ -1,5 +1,6 @@
 use core::fmt::Debug;
 use rand_core::{CryptoRng, RngCore};
+use crate::serde::Serde;
 
 pub trait Error: core::fmt::Debug {
     /// Convert error to a generic error kind
@@ -37,8 +38,8 @@ pub enum ErrorKind {
 ///
 /// This trait defines the methods required for generating ECDSA key pairs.
 pub trait EcdsaKeyGen: ErrorType  {
-    type PrivateKeyOut<'a> where Self: 'a;
-    type PublicKeyOut<'a>: where Self: 'a;
+    type PrivateKeyOut<'a>: Serde where Self: 'a;
+    type PublicKeyOut<'a>: Serde where Self: 'a;
 
     /// Generates an ECDSA key pair.
     ///
@@ -60,14 +61,13 @@ pub trait EcdsaKeyGen: ErrorType  {
 ///
 /// This trait defines the methods required for signing messages using ECDSA.
 pub trait EcdsaSign: ErrorType  {
-    type PrivateKeyIn<'a>;
-    type Message;
-    type Signature;
+    type PrivateKeyIn<'a> : Serde;
+    type Message : Serde;
+    type Signature : Serde;
 
     /// Signs a message hash using the private key and elliptic curve.
     ///
     /// # Parameters
-    /// - `curve`: The elliptic curve to use for signing.
     /// - `private_key`: The private key to use for signing.
     /// - `message_hash`: The hash of the message to sign.
     ///
@@ -88,14 +88,13 @@ pub trait EcdsaSign: ErrorType  {
 ///
 /// This trait defines the methods required for verifying ECDSA signatures.
 pub trait EcdsaVerify: ErrorType {
-    type PublicKey;
-    type Message;
-    type Signature;
+    type PublicKey : Serde;
+    type Message : Serde;
+    type Signature : Serde;
 
     /// Verifies an ECDSA signature.
     ///
     /// # Parameters
-    /// - `curve`: The elliptic curve to use for verification.
     /// - `public_key`: The public key to use for verification.
     /// - `message_hash`: The hash of the message to verify.
     /// - `signature`: The signature to verify.

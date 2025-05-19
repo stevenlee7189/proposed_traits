@@ -1,3 +1,5 @@
+use crate::serde::Serde;
+
 /// Error kind.
 ///
 /// This represents a common set of digest operation errors. Implementations are
@@ -67,7 +69,9 @@ pub trait ErrorType {
 
 /// Message Authentication algorithm
 pub trait Mac: ErrorType {
-    type InitParams;
+    type InitParams<'a> : where Self: 'a;
+
+    type Key<'a>: Serde where Self: 'a;
     /// Init instance of the crypto function with the given context.
     ///
     /// # Parameters
@@ -77,7 +81,7 @@ pub trait Mac: ErrorType {
     /// # Returns
     ///
     /// A new instance of the hash function.    
-    fn init(init_params: Self::InitParams) -> Result<(), Self::Error>;
+    fn init(init_params: Self::InitParams<'_>) -> Result<(), Self::Error>;
 
     /// Sets the key for the HMAC algorithm.
     ///
@@ -88,7 +92,7 @@ pub trait Mac: ErrorType {
     /// # Returns
     ///
     /// A `Result` indicating success or failure. On success, returns `Ok(())`. On failure, returns an error of type `Self::Error`.
-    fn set_key(&mut self, key: &[u8]) -> Result<(), Self::Error>;
+    fn set_key(&mut self, key: Self::Key<'_>) -> Result<(), Self::Error>;
 
     /// Update state using provided input data.
     ///
@@ -99,7 +103,7 @@ pub trait Mac: ErrorType {
     /// # Returns
     ///
     /// A `Result` indicating success or failure. On success, returns `Ok(())`. On failure, returns a `CryptoError`.    
-    fn update(&mut self, input: &mut [u8]) -> Result<(), Self::Error>;
+    fn update(&mut self, input: &[u8]) -> Result<(), Self::Error>;
 
     /// Reset instance to its initial state.
     ///

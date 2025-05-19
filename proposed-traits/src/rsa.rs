@@ -1,5 +1,7 @@
 use core::num::NonZeroU32;
 
+use crate::serde::Serde;
+
 pub enum PaddingMode {
     Pkcs1v15,
     Pss,
@@ -49,19 +51,21 @@ pub trait RsaKeyGen: ErrorType + RsaKeys {
 }
 
 pub trait RsaSign: ErrorType + RsaKeys + RsaSignature {
+    type Message : Serde;
     fn sign(
         &self,
         private_key: &Self::PrivateKey,
-        message_digest: impl AsRef<[u8]>,
+        message : Self::Message,
         padding_mode: PaddingMode,
     ) -> Result<Self::Signature, Self::Error>;
 }
 
 pub trait RsaVerify: ErrorType + RsaKeys + RsaSignature {
+    type Message : Serde;
     fn verify(
         &self,
         public_key: &Self::PublicKey,
-        message_digest: impl AsRef<[u8]>,
+        message: Self::Message,
         padding_mode: PaddingMode,
         signature: &Self::Signature,
     ) -> Result<Self::Signature, Self::Error>;

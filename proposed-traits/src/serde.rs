@@ -1,4 +1,4 @@
-// common.rs
+// serde.rs
 
 pub trait SerdeError: core::fmt::Debug {
     /// Convert error to a generic error kind
