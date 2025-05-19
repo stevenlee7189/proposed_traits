@@ -1,4 +1,3 @@
-use crate::serde::Serde;
 
 /// Error kind.
 ///
@@ -70,8 +69,8 @@ pub trait ErrorType {
 /// Message Authentication algorithm
 pub trait Mac: ErrorType {
     type InitParams<'a> : where Self: 'a;
+    type OpContext<'a> : where Self: 'a;
 
-    type Key<'a>: Serde where Self: 'a;
     /// Init instance of the crypto function with the given context.
     ///
     /// # Parameters
@@ -81,18 +80,8 @@ pub trait Mac: ErrorType {
     /// # Returns
     ///
     /// A new instance of the hash function.    
-    fn init(init_params: Self::InitParams<'_>) -> Result<(), Self::Error>;
+    fn init(init_params: Self::InitParams<'_>) -> Result<Self::OpContext<'_>, Self::Error>;
 
-    /// Sets the key for the HMAC algorithm.
-    ///
-    /// # Parameters
-    ///
-    /// - `key`: The key to be used for HMAC.
-    ///
-    /// # Returns
-    ///
-    /// A `Result` indicating success or failure. On success, returns `Ok(())`. On failure, returns an error of type `Self::Error`.
-    fn set_key(&mut self, key: Self::Key<'_>) -> Result<(), Self::Error>;
 
     /// Update state using provided input data.
     ///
