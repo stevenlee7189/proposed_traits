@@ -90,11 +90,9 @@ pub trait MacCtrl: ErrorType {
     ///
     /// A new instance of the hash function.
     fn init<'a>(&'a mut self, init_params: Self::InitParams<'a>) -> Result<Self::OpContext<'a>, Self::Error>;
-
-
 }
 
-/// Message Authentication algorithm
+/// Message Authentication Code Operation 
 pub trait MacOp: ErrorType {
 
 
