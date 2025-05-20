@@ -66,6 +66,15 @@ pub trait ErrorType {
     type Error: Error;
 }
 
+pub trait McCtrlReset: ErrorType {
+    /// Reset instance to its initial state.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` indicating success or failure. On success, returns `Ok(())`. On failure, returns a `CryptoError`.    
+    fn reset(&mut self) -> Result<(), Self::Error>;
+
+}
 
 pub trait MacCtrl: ErrorType {
     type InitParams<'a>: where Self: 'a;
@@ -80,14 +89,8 @@ pub trait MacCtrl: ErrorType {
     /// # Returns
     ///
     /// A new instance of the hash function.
-    fn init(&mut self, init_params: Self::InitParams<'_>) -> Result<Self::OpContext<'_>, Self::Error>;
+    fn init<'a>(&'a mut self, init_params: Self::InitParams<'a>) -> Result<Self::OpContext<'a>, Self::Error>;
 
-    /// Reset instance to its initial state.
-    ///
-    /// # Returns
-    ///
-    /// A `Result` indicating success or failure. On success, returns `Ok(())`. On failure, returns a `CryptoError`.    
-    fn reset(&mut self) -> Result<(), Self::Error>;
 
 }
 
