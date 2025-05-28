@@ -1,6 +1,6 @@
 use core::num::NonZeroU32;
 
-use crate::serde::Serde;
+use crate::common::SerializeDeserialize;
 
 pub enum PaddingMode {
     Pkcs1v15,
@@ -51,7 +51,7 @@ pub trait RsaKeyGen: ErrorType + RsaKeys {
 }
 
 pub trait RsaSign: ErrorType + RsaKeys + RsaSignature {
-    type Message : Serde;
+    type Message : SerializeDeserialize;
     fn sign(
         &self,
         private_key: &Self::PrivateKey,
@@ -61,7 +61,7 @@ pub trait RsaSign: ErrorType + RsaKeys + RsaSignature {
 }
 
 pub trait RsaVerify: ErrorType + RsaKeys + RsaSignature {
-    type Message : Serde;
+    type Message : SerializeDeserialize;
     fn verify(
         &self,
         public_key: &Self::PublicKey,

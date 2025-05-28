@@ -1,6 +1,6 @@
 use core::fmt::Debug;
 use rand_core::{CryptoRng, RngCore};
-use crate::serde::Serde;
+use crate::common::SerializeDeserialize;
 
 pub trait Error: core::fmt::Debug {
     /// Convert error to a generic error kind
@@ -38,8 +38,8 @@ pub enum ErrorKind {
 ///
 /// This trait defines the methods required for generating ECDSA key pairs.
 pub trait EcdsaKeyGen: ErrorType  {
-    type PrivateKeyOut<'a>: Serde where Self: 'a;
-    type PublicKeyOut<'a>: Serde where Self: 'a;
+    type PrivateKeyOut<'a>: SerializeDeserialize where Self: 'a;
+    type PublicKeyOut<'a>: SerializeDeserialize where Self: 'a;
 
     /// Generates an ECDSA key pair.
     ///
@@ -61,9 +61,9 @@ pub trait EcdsaKeyGen: ErrorType  {
 ///
 /// This trait defines the methods required for signing messages using ECDSA.
 pub trait EcdsaSign: ErrorType  {
-    type PrivateKeyIn<'a> : Serde;
-    type Message : Serde;
-    type Signature : Serde;
+    type PrivateKeyIn<'a> : SerializeDeserialize;
+    type Message : SerializeDeserialize;
+    type Signature : SerializeDeserialize;
 
     /// Signs a message hash using the private key and elliptic curve.
     ///
@@ -88,9 +88,9 @@ pub trait EcdsaSign: ErrorType  {
 ///
 /// This trait defines the methods required for verifying ECDSA signatures.
 pub trait EcdsaVerify: ErrorType {
-    type PublicKey : Serde;
-    type Message : Serde;
-    type Signature : Serde;
+    type PublicKey : SerializeDeserialize;
+    type Message : SerializeDeserialize;
+    type Signature : SerializeDeserialize;
 
     /// Verifies an ECDSA signature.
     ///

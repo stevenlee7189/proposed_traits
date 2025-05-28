@@ -30,8 +30,8 @@ pub trait OutputSize {
     const OUTPUT_SIZE: usize;
 }
 
-pub trait Serde: ErrorType {
+pub trait SerializeDeserialize: ErrorType {
     type OutputType;
     fn to_le_bytes(&self, dest: &mut [u8]) -> Result<(), Self::Error>;
-    fn from_bytes_le(bytes: &[u8]) -> Result<Self::OutputType, Self::Error>;
+    fn from_le_bytes(bytes: &[u8]) -> Result<Self::OutputType, Self::Error>;
 }

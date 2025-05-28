@@ -5,6 +5,6 @@ pub mod digest;
 pub mod ecdsa;
 pub mod mac;
 pub mod rsa;
-pub mod serde;
+pub mod common;
 
 pub mod block_device;

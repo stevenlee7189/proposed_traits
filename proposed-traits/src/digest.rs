@@ -1,4 +1,4 @@
-use crate::serde::OutputSize;
+use crate::common::OutputSize;
 use core::fmt::Debug;
 
 
