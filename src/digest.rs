@@ -74,7 +74,7 @@ pub trait Digest: ErrorType {
     /// # Returns
     ///
     /// A new instance of the hash function.    
-    fn init(init_params: Self::InitParams) -> Result<(), Self::Error>;
+    fn init(&mut self, init_params: Self::InitParams) -> Result<(), Self::Error>;
 
     /// Update state using provided input data.
     ///
