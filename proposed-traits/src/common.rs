@@ -26,9 +26,6 @@ pub enum ErrorKind {
     SourceBufferTooSmall,
 }
 
-pub trait OutputSize {
-    const OUTPUT_SIZE: usize;
-}
 
 pub trait SerializeDeserialize: ErrorType {
     type OutputType;

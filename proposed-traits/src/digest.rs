@@ -1,4 +1,3 @@
-use crate::common::OutputSize;
 use core::fmt::Debug;
 
 
@@ -91,7 +90,7 @@ pub trait DigestCtrlReset: ErrorType {
 }
 
 
-pub trait DigestOp: ErrorType + OutputSize {
+pub trait DigestOp: ErrorType  {
 
 
     /// Update state using provided input data.
