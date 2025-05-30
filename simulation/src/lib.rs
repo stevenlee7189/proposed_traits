@@ -1,7 +1,7 @@
 pub mod delay;
 pub mod digital;
 pub mod spi;
-//pub mod ecdsa;
+pub mod digest;
 
 pub use digital::{SimulatedInputPin, SimulatedOutputPin};
 pub use spi::SimulatedSpiBus;

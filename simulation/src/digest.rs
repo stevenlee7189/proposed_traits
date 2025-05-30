@@ -1,48 +1,51 @@
-use proposed_traits::digest::DigestOp;
+use proposed_traits::digest::*;
+use std::{convert::Infallible, marker::PhantomData};
 
-struct DigestEngine;
+struct Inner;
 
 
-struct Sha256Context<'a> {
-    engine: &'a mut  DigestEngine,
+pub trait DigestInit: ErrorType {
+    type InitParams;
+    type OpContext<'a>: DigestOp where Self: 'a;
+
+    fn init<'a>(&'a mut self, init_params: Self::InitParams) -> Result<Self::OpContext<'a>, Self::Error>;
 }
 
-struct Sha512Context<'a> {
-    engine: &'a mut  DigestEngine,
+struct Controller<'r> {
+    _inner: &'r mut Inner,
 }
 
-
-enum DigestContext<'a> {
-    Sha256(Sha256Context<'a>),
-    Sha512(Sha512Context<'a>),
+impl ErrorType for Controller<'_> {
+    type Error = Infallible; // Define your error type here
 }
 
+impl DigestInit for Controller<'_> {
+    type InitParams = (); // Define your InitParams type here
+    type OpContext<'a> = OpContextImpl<'a> where Self:'a; // Define your OpContext type here
 
-enum DigestOutput {
-    Sha256([u32; 8]),   // Output for SHA-256 algorithm
-    Sha512([u32; 16]),  // Output for SHA-512 algorithm
+    fn init<'a>(&'a mut self, _init_params: Self::InitParams) -> Result<Self::OpContext<'a>, Self::Error> {
+        Ok(OpContextImpl {
+            _marker: PhantomData,
+        })
+    }
 }
 
-enum Algorithm {
-    Sha256,
-    Sha512,
+struct OpContextImpl<'a> {
+    _marker: PhantomData<&'a ()>,
 }
 
+impl<'a> proposed_traits::digest::ErrorType for OpContextImpl<'a> {
+    type Error = Infallible;
+}
 
-impl DigestOp for Sha256Context {
-    type Output = DigestOutput;
+impl<'a> DigestOp for OpContextImpl<'a> {
 
-    fn update(&mut self, data: &[u8]) {
-        match self {
-            DigestContext::Sha256(ctx) => ctx.update(data),
-            DigestContext::Sha512(ctx) => ctx.update(data),
-        }
+    fn update(&mut self, _input: &[u8]) -> Result<(), Self::Error> {
+        // Implement the update logic here
+        Ok(())
     }
 
-    fn finalize(self) -> Self::Output {
-        match self {
-            DigestContext::Sha256(ctx) => DigestOutput::Sha256(ctx.finalize()),
-            DigestContext::Sha512(ctx) => DigestOutput::Sha512(ctx.finalize()),
-        }
+    fn finalize(&mut self, _output: &mut [u8]) -> Result<(), Self::Error> {
+        Ok(()) // Return the final output
     }
 }
