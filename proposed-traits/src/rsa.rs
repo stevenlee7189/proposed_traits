@@ -63,7 +63,7 @@ pub trait RsaSign: ErrorType + RsaKeys + RsaSignature {
 pub trait RsaVerify: ErrorType + RsaKeys + RsaSignature {
     type Message : SerializeDeserialize;
     fn verify(
-        &self,
+        &mut self,
         public_key: &Self::PublicKey,
         message: Self::Message,
         padding_mode: PaddingMode,
