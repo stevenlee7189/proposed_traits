@@ -60,13 +60,15 @@ pub trait RsaSign: ErrorType + RsaKeys + RsaSignature {
     ) -> Result<Self::Signature, Self::Error>;
 }
 
-pub trait RsaVerify: ErrorType + RsaKeys + RsaSignature {
-    type Message : SerializeDeserialize;
+pub trait RsaVerify<'a>: ErrorType + RsaKeys + RsaSignature {
+    type Message: SerializeDeserialize + 'a;
+    type SignatureType: SerializeDeserialize + 'a;
+
     fn verify(
         &mut self,
         public_key: &Self::PublicKey,
         message: Self::Message,
         padding_mode: PaddingMode,
-        signature: &Self::Signature,
-    ) -> Result<Self::Signature, Self::Error>;
+        signature: &Self::SignatureType,
+    ) -> Result<Self::SignatureType, Self::Error>;
 }
