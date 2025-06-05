@@ -104,6 +104,29 @@ pub trait I3c : ErrorType {
     fn acknowledge_ibi(&mut self, address: SevenBitAddress) -> Result<(), Self::Error>;
 
     /// Handles a hot-join request from a device joining the bus dynamically.
+    ///
+    /// In an I3C bus system, devices can dynamically join the bus after it has already been initialized and is operational.
+    /// This is known as a **hot-join**. Unlike I2C, which typically requires all devices to be present at initialization,
+    /// I3C allows for more flexible and dynamic device management.
+    ///
+    /// This method is invoked by the I3C master when a new device signals its intent to join the bus. The master must then:
+    /// - Detect the hot-join request.
+    /// - Validate the new device’s presence and protocol compliance.
+    /// - Assign a dynamic address (typically via `assign_dynamic_address`).
+    /// - Update internal routing or device tables.
+    ///
+    /// # Typical flow
+    /// 1. A device asserts a hot-join request on the bus.
+    /// 2. The I3C master detects this and calls `handle_hot_join()`.
+    /// 3. The method performs protocol-level checks and initiates dynamic address assignment.
+    /// 4. If successful, the device becomes an active participant on the bus.
+    ///
+    /// # Errors
+    /// Returns `Err(Self::Error)` if an error occurs during the hot-join process, such as:
+    /// - Address conflict
+    /// - Protocol violation
+    /// - Bus arbitration failure
+    ///
     fn handle_hot_join(&mut self) -> Result<(), Self::Error>;
 
     /// Sets the bus speed mode.

@@ -3,6 +3,7 @@ pub mod digital;
 pub mod spi;
 pub mod digest;
 pub mod i3c;
+pub mod i2c_target;
 
 pub use digital::{SimulatedInputPin, SimulatedOutputPin};
 pub use spi::SimulatedSpiBus;
