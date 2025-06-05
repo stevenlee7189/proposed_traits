@@ -1,13 +1,9 @@
-use embedded_hal::i2c::{I2c, SevenBitAddress};
+use embedded_hal::i2c::SevenBitAddress;
 
 /// Represents errors that can occur during I3C communication.
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[non_exhaustive]
-pub enum I3cErrorKind {
-
-    I2CError(embedded_hal::i2c::ErrorKind),
-
-    // ────── I3C-Specific Errors ──────
+pub enum ErrorKind {
 
     /// A Common Command Code (CCC) was malformed or not supported.
     InvalidCcc,
@@ -31,13 +27,18 @@ pub enum I3cErrorKind {
     Other,
 }
 
-pub trait I3CError: core::fmt::Debug {
+pub trait Error: core::fmt::Debug {
     /// Convert error to a generic error kind
     ///
     /// By using this method, errors freely defined by Algo implementations
     /// can be converted to a set of generic errors upon which generic
     /// code can act.
-    fn kind(&self) -> I3cErrorKind;
+    fn kind(&self) -> ErrorKind;
+}
+
+pub trait ErrorType {
+    /// Error type.
+    type Error: Error;
 }
 
 
@@ -53,14 +54,12 @@ pub enum I3cSpeed {
     HDRDdr,
 }
 
-/// A trait for I3C master devices that extends the embedded-hal I2C trait.
+/// A trait for I3C master devices that isintended to be used alongside  the embedded-hal I2C trait.
 ///
 /// This trait adds I3C-specific capabilities such as dynamic address assignment,
 /// in-band interrupt handling, hot-join support, and high-speed mode configuration.
-pub trait I3cMaster: I2c<SevenBitAddress> {
+pub trait I3c : ErrorType {
     
-    /// Unified error type for I2C and I3C operations.
-    type Error: From<embedded_hal::i2c::ErrorKind> + core::fmt::Debug;
 
     /// Assigns a dynamic address to a device with a known static address.
     ///
@@ -95,25 +94,25 @@ pub trait I3cMaster: I2c<SevenBitAddress> {
     ///
     /// - This method is specific to I3C and has no equivalent in I2C.
     /// - It is typically used during bus initialization or when handling hot-join events.
-    fn assign_dynamic_address(&mut self, static_address: SevenBitAddress) -> Result<SevenBitAddress, <Self as I3cMaster>::Error>;
+    fn assign_dynamic_address(&mut self, static_address: SevenBitAddress) -> Result<SevenBitAddress, Self::Error>;
 
     /// Acknowledges an in-band interrupt (IBI) from a device.
     ///
     /// # Arguments
     ///
     /// * `address` - The address of the device that issued the IBI.
-    fn acknowledge_ibi(&mut self, address: SevenBitAddress) -> Result<(), <Self as I3cMaster>::Error>;
+    fn acknowledge_ibi(&mut self, address: SevenBitAddress) -> Result<(), Self::Error>;
 
     /// Handles a hot-join request from a device joining the bus dynamically.
-    fn handle_hot_join(&mut self) -> Result<(), <Self as I3cMaster>::Error>;
+    fn handle_hot_join(&mut self) -> Result<(), Self::Error>;
 
     /// Sets the bus speed mode.
     ///
     /// # Arguments
     ///
     /// * `speed` - The desired I3C speed mode.
-    fn set_bus_speed(&mut self, speed: I3cSpeed) -> Result<(), <Self as I3cMaster>::Error>;
+    fn set_bus_speed(&mut self, speed: I3cSpeed) -> Result<(), Self::Error>;
 
     /// Requests mastership of the bus in a multi-master environment.
-    fn request_mastership(&mut self) -> Result<(), <Self as I3cMaster>::Error>;
+    fn request_mastership(&mut self) -> Result<(), Self::Error>;
 }
