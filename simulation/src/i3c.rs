@@ -86,3 +86,43 @@ impl I3c for DummyI3cController {
         Ok(())
     }
 }
+
+
+/// Represents key I3C events relevant to dynamic device management.
+#[derive(Debug, Clone, Copy)]
+pub enum I3cEvent {
+    /// A device with a static address is requesting a dynamic address.
+    AssignDynamicAddress {
+        static_address: SevenBitAddress,
+    },
+
+    /// A new device is attempting to join the bus dynamically (hot-join).
+    HandleHotJoin,
+}
+
+/// Dummy I3cDriver struct for demonstration purposes.
+/// Replace or import with the actual I3cDriver definition as needed.
+pub struct I3cDriver<T: I3c> {
+    pub controller: T,
+}
+
+impl<T: I3c> I3cDriver<T> {
+    pub fn assign_dynamic_address(&mut self, static_address: SevenBitAddress) -> Result<SevenBitAddress, T::Error> {
+        self.controller.assign_dynamic_address(static_address)
+    }
+    pub fn handle_hot_join(&mut self) -> Result<(), T::Error> {
+        self.controller.handle_hot_join()
+    }
+}
+
+pub fn i3c_event_handler<T: I3c>(driver: &mut I3cDriver<T>, event: I3cEvent) {
+    match event {
+        I3cEvent::AssignDynamicAddress { static_address } => {
+            let _ = driver.assign_dynamic_address(static_address);
+        }
+        I3cEvent::HandleHotJoin => {
+            let _ = driver.handle_hot_join();
+        }
+    }
+
+}
