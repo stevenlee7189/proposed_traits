@@ -10,3 +10,4 @@ pub mod common;
 pub mod block_device;
 pub mod system_control;
 pub mod i2c_target;
+pub mod i3c_master;
