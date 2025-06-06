@@ -1,11 +1,11 @@
-use embedded_hal::i2c::ErrorType as I2CErrorType; 
+use embedded_hal::i2c::ErrorType as I2CErrorType;
 
 /// Trait representing a target (slave) I2C device behavior.
-/// 
+///
 /// This trait defines the methods that an I2C target device must implement to handle
 /// transactions initiated by an I2C master. It includes methods for handling writes,
 /// reads, stop conditions, and address match events.
-pub trait I2CTarget : I2CErrorType {
+pub trait I2CTarget: I2CErrorType {
     /// Called when the master initiates a write to this target.
     ///
     /// # Arguments
@@ -68,7 +68,6 @@ pub trait I2CTarget : I2CErrorType {
     /// }
     /// ```
     fn on_transaction_start(&mut self, repeated: bool);
-
 
     /// Optional: handle stop condition or reset.
     ///

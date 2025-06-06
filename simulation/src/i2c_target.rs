@@ -30,16 +30,13 @@ impl<T: I2CTarget> I2CTargetDriver<T> {
     }
 }
 
-
 /// Represents events that an I2C controller might generate for a target (slave) device.
 pub enum I2CEvent<'a> {
     /// The controller sent an address; check if it matches.
     AddressMatch(u8),
 
     /// A new transaction has started.
-    TransactionStart {
-        repeated: bool,
-    },
+    TransactionStart { repeated: bool },
 
     /// The controller is writing data to the target.
     Write(&'a [u8]),
@@ -50,7 +47,6 @@ pub enum I2CEvent<'a> {
     /// The controller issued a stop condition.
     Stop,
 }
-
 
 pub fn i2c_event_handler<T: I2CTarget>(driver: &mut I2CTargetDriver<T>, event: I2CEvent) {
     match event {

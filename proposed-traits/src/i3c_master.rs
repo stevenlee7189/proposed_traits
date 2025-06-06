@@ -4,7 +4,6 @@ use embedded_hal::i2c::SevenBitAddress;
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[non_exhaustive]
 pub enum ErrorKind {
-
     /// A Common Command Code (CCC) was malformed or not supported.
     InvalidCcc,
 
@@ -41,8 +40,6 @@ pub trait ErrorType {
     type Error: Error;
 }
 
-
-
 /// Represents the supported I3C bus speed modes.
 #[derive(Debug, Clone, Copy)]
 pub enum I3cSpeed {
@@ -58,9 +55,7 @@ pub enum I3cSpeed {
 ///
 /// This trait adds I3C-specific capabilities such as dynamic address assignment,
 /// in-band interrupt handling, hot-join support, and high-speed mode configuration.
-pub trait I3c : ErrorType {
-    
-
+pub trait I3c: ErrorType {
     /// Assigns a dynamic address to a device with a known static address.
     ///
     /// This method initiates the Dynamic Address Assignment (DAA) process as defined by the I3C specification.
@@ -94,7 +89,10 @@ pub trait I3c : ErrorType {
     ///
     /// - This method is specific to I3C and has no equivalent in I2C.
     /// - It is typically used during bus initialization or when handling hot-join events.
-    fn assign_dynamic_address(&mut self, static_address: SevenBitAddress) -> Result<SevenBitAddress, Self::Error>;
+    fn assign_dynamic_address(
+        &mut self,
+        static_address: SevenBitAddress,
+    ) -> Result<SevenBitAddress, Self::Error>;
 
     /// Acknowledges an in-band interrupt (IBI) from a device.
     ///

@@ -1,6 +1,6 @@
 use core::fmt::Debug;
 use rand_core::{CryptoRng, RngCore};
-use crate::common::SerializeDeserialize;
+// use crate::common::ToBytesFromBytes; // Removed because it does not exist
 
 pub trait Error: core::fmt::Debug {
     /// Convert error to a generic error kind
@@ -31,15 +31,12 @@ pub enum ErrorKind {
     Other,
 }
 
-
-
-
 /// Trait for ECDSA key generation.
 ///
 /// This trait defines the methods required for generating ECDSA key pairs.
-pub trait EcdsaKeyGen: ErrorType  {
-    type PrivateKeyOut<'a>: SerializeDeserialize where Self: 'a;
-    type PublicKeyOut<'a>: SerializeDeserialize where Self: 'a;
+pub trait EcdsaKeyGen: ErrorType {
+    type PrivateKeyOut<'a>; // Removed ToBytesFromBytes bound
+    type PublicKeyOut<'a>; // Removed ToBytesFromBytes bound
 
     /// Generates an ECDSA key pair.
     ///
@@ -48,22 +45,21 @@ pub trait EcdsaKeyGen: ErrorType  {
     ///
     /// # Returns
     /// A result containing the generated private and public keys, or an error.    
-    fn generate_key_pair<R: RngCore + CryptoRng>( 
+    fn generate_key_pair<R: RngCore + CryptoRng>(
         &mut self,
         rng: R,
         priv_key: &mut Self::PrivateKeyOut<'_>,
         pub_key: &mut Self::PublicKeyOut<'_>,
     ) -> Result<(), Self::Error>;
-        
 }
 
 /// Trait for ECDSA signing.
 ///
 /// This trait defines the methods required for signing messages using ECDSA.
-pub trait EcdsaSign: ErrorType  {
-    type PrivateKeyIn<'a> : SerializeDeserialize;
-    type Message : SerializeDeserialize;
-    type Signature : SerializeDeserialize;
+pub trait EcdsaSign: ErrorType {
+    type PrivateKeyIn<'a>;
+    type Message;
+    type Signature;
 
     /// Signs a message hash using the private key and elliptic curve.
     ///
@@ -78,19 +74,18 @@ pub trait EcdsaSign: ErrorType  {
         private_key: &Self::PrivateKeyIn<'_>,
         message: Self::Message,
         rng: R,
-    ) -> Result<Self::Signature, Self::Error>    
+    ) -> Result<Self::Signature, Self::Error>
     where
         R: RngCore + CryptoRng;
-
 }
 
 /// Trait for ECDSA verification.
 ///
 /// This trait defines the methods required for verifying ECDSA signatures.
 pub trait EcdsaVerify: ErrorType {
-    type PublicKey : SerializeDeserialize;
-    type Message : SerializeDeserialize;
-    type Signature : SerializeDeserialize;
+    type PublicKey;
+    type Message;
+    type Signature;
 
     /// Verifies an ECDSA signature.
     ///

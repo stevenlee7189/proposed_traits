@@ -26,9 +26,20 @@ pub enum ErrorKind {
     SourceBufferTooSmall,
 }
 
+/// Endianness selector
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Endian {
+    Little,
+    Big,
+}
 
-pub trait SerializeDeserialize: ErrorType {
-    type OutputType;
-    fn to_le_bytes(&self, dest: &mut [u8]) -> Result<(), Self::Error>;
-    fn from_le_bytes(bytes: &[u8]) -> Result<Self::OutputType, Self::Error>;
+/// Trait for endian-aware serialization and deserialization
+pub trait ToBytes: ErrorType {
+    fn to_bytes(&self, dest: &mut [u8], endian: Endian) -> Result<(), Self::Error>;
+}
+
+pub trait FromBytes: ErrorType {
+    fn from_bytes(bytes: &[u8], endian: Endian) -> Result<Self, Self::Error>
+    where
+        Self: Sized;
 }

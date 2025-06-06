@@ -1,4 +1,3 @@
-
 /// Error kind.
 ///
 /// This represents a common set of digest operation errors. Implementations are
@@ -73,12 +72,15 @@ pub trait McCtrlReset: ErrorType {
     ///
     /// A `Result` indicating success or failure. On success, returns `Ok(())`. On failure, returns a `CryptoError`.    
     fn reset(&mut self) -> Result<(), Self::Error>;
-
 }
 
 pub trait MacInit: ErrorType {
-    type InitParams<'a>: where Self: 'a;
-    type OpContext<'a>: MacOp where Self: 'a;
+    type InitParams<'a>
+    where
+        Self: 'a;
+    type OpContext<'a>: MacOp
+    where
+        Self: 'a;
 
     /// Init instance of the crypto function with the given context.
     ///
@@ -89,15 +91,14 @@ pub trait MacInit: ErrorType {
     /// # Returns
     ///
     /// A new instance of the hash function.
-    fn init<'a>(&'a mut self, init_params: Self::InitParams<'a>) -> Result<Self::OpContext<'a>, Self::Error>;
+    fn init<'a>(
+        &'a mut self,
+        init_params: Self::InitParams<'a>,
+    ) -> Result<Self::OpContext<'a>, Self::Error>;
 }
 
-
-
-/// Message Authentication Code Operation 
+/// Message Authentication Code Operation
 pub trait MacOp: ErrorType {
-
-
     /// Update state using provided input data.
     ///
     /// # Parameters
@@ -109,7 +110,6 @@ pub trait MacOp: ErrorType {
     /// A `Result` indicating success or failure. On success, returns `Ok(())`. On failure, returns a `CryptoError`.    
     fn update(&mut self, input: &[u8]) -> Result<(), Self::Error>;
 
-
     /// Finalize the computation and produce the output.
     ///
     /// # Parameters
@@ -120,5 +120,4 @@ pub trait MacOp: ErrorType {
     ///
     /// A `Result` indicating success or failure. On success, returns `Ok(())`. On failure, returns a `CryptoError`.    
     fn finalize(&mut self, tag: &mut [u8]) -> Result<(), Self::Error>;
-
 }

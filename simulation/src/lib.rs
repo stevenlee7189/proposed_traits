@@ -1,9 +1,9 @@
 pub mod delay;
-pub mod digital;
-pub mod spi;
 pub mod digest;
-pub mod i3c;
+pub mod digital;
 pub mod i2c_target;
+pub mod i3c;
+pub mod spi;
 
 pub use digital::{SimulatedInputPin, SimulatedOutputPin};
 pub use spi::SimulatedSpiBus;
@@ -64,15 +64,12 @@ impl SimulatedPac {
 /// It ensures that the controller behaves correctly across both protocols and is ready for
 /// deployment in production firmware.
 ///
-
 // Assuming these are defined elsewhere
 use proposed_traits::i3c_master::{self, I3cSpeed};
 
-
 pub fn test_i3c_sequence<T>(controller: &mut T)
 where
-    T: i3c_master::I3c
-    + embedded_hal::i2c::I2c
+    T: i3c_master::I3c + embedded_hal::i2c::I2c,
 {
     // 1. Assign a dynamic address
     let static_addr = 0x52;

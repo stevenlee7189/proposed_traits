@@ -27,15 +27,14 @@ pub trait ErrorType {
     type Error: Error;
 }
 
-
-pub trait ClockControl:ErrorType { 
+pub trait ClockControl: ErrorType {
     type PeripheralId;
-    fn enable_clock(&mut self, peripheral : Self::PeripheralId) -> Result<(), Self::Error>;
-    fn disable_clock(&mut self, peripheral : Self::PeripheralId) -> Result<(), Self::Error>;
-}    
+    fn enable_clock(&mut self, peripheral: Self::PeripheralId) -> Result<(), Self::Error>;
+    fn disable_clock(&mut self, peripheral: Self::PeripheralId) -> Result<(), Self::Error>;
+}
 
-pub trait ResetControl : ErrorType{ 
+pub trait ResetControl: ErrorType {
     type PeripheralId;
-    fn enter_reset(&mut self, peripheral : Self::PeripheralId) -> Result<(), Self::Error>;
-    fn exit_reset(&mut self, peripheral : Self::PeripheralId) -> Result<(), Self::Error>;
-}    
+    fn enter_reset(&mut self, peripheral: Self::PeripheralId) -> Result<(), Self::Error>;
+    fn exit_reset(&mut self, peripheral: Self::PeripheralId) -> Result<(), Self::Error>;
+}
