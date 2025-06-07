@@ -9,7 +9,9 @@ pub mod rsa;
 
 pub mod block_device;
 pub mod i2c_target;
+pub mod i3c_target;
 pub mod i3c_master;
 pub mod system_control;
 
 pub mod client;
+pub mod service;
