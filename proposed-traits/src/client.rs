@@ -42,11 +42,9 @@ pub trait ErrorType {
     type Error: Error;
 }
 
-
 /// An abstraction over a message port that enables sending serialized requests
 /// to a target service and receiving deserialized responses over a communication channel.
-pub trait Client : ErrorType {
-
+pub trait Client: ErrorType {
     /// Sends a request to a specific target service and waits for a response.
     ///
     /// # Arguments

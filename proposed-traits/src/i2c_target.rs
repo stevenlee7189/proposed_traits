@@ -1,6 +1,5 @@
 use embedded_hal::i2c::ErrorType as I2CErrorType;
 
-
 /// A convenience trait alias that represents a fully-featured I2C target device.
 ///
 /// This trait combines all the core and extended I2C target traits into a single interface:
@@ -30,12 +29,14 @@ use embedded_hal::i2c::ErrorType as I2CErrorType;
 /// }
 /// ```
 pub trait I2CTarget:
-    I2CCoreTarget + ReadTarget + WriteTarget + WriteReadTarget + RegisterAccess {}
+    I2CCoreTarget + ReadTarget + WriteTarget + WriteReadTarget + RegisterAccess
+{
+}
 
 impl<T> I2CTarget for T where
-    T: I2CCoreTarget + ReadTarget + WriteTarget + WriteReadTarget + RegisterAccess {}
-
-    
+    T: I2CCoreTarget + ReadTarget + WriteTarget + WriteReadTarget + RegisterAccess
+{
+}
 
 /// Trait representing a target (slave) I2C device behavior.
 ///

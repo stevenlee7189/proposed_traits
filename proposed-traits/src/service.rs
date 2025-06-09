@@ -1,4 +1,4 @@
-use crate::common::{ToBytes, FromBytes};
+use crate::common::{FromBytes, ToBytes};
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum ErrorKind {
@@ -39,8 +39,6 @@ pub trait ErrorType {
     type Error: Error;
 }
 
-
-
 /// Trait for services that can handle interrupt notifications.
 pub trait Interruptible {
     /// Returns the notification bitmask this service is interested in.
@@ -50,14 +48,9 @@ pub trait Interruptible {
     fn on_notification(&mut self, irq_bits: u32);
 }
 
-pub trait Service : ErrorType {
-    type Request : ToBytes;
-    type Response : FromBytes;
+pub trait Service: ErrorType {
+    type Request: ToBytes;
+    type Response: FromBytes;
 
     fn handle(&mut self, op: u16, request: Self::Request) -> Result<Self::Response, Self::Error>;
-
 }
-
-
-
-

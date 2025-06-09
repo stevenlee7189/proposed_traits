@@ -1,10 +1,10 @@
 pub mod delay;
 pub mod digest;
 pub mod digital;
+pub mod dispatcher;
 pub mod i2c_target;
 pub mod i3c;
 pub mod spi;
-pub mod dispatcher;
 
 pub use digital::{SimulatedInputPin, SimulatedOutputPin};
 pub use spi::SimulatedSpiBus;

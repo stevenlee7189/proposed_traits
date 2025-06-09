@@ -2,11 +2,9 @@ use crate::i2c_target::I2CCoreTarget;
 
 /// A convenience trait alias for I3C targets that support all advanced features,
 /// including I2C fallback, dynamic addressing, and In-Band Interrupts (IBI).
-pub trait I3CTarget:
-    DynamicAddressable + IBICapable {}
+pub trait I3CTarget: DynamicAddressable + IBICapable {}
 
-impl<T> I3CTarget for T where
-    T: DynamicAddressable + IBICapable {}
+impl<T> I3CTarget for T where T: DynamicAddressable + IBICapable {}
 
 /// Core trait for I3C targets that builds on I2C target behavior.
 ///
