@@ -1,6 +1,5 @@
 use core::fmt::Debug;
-use rand_core::{CryptoRng, RngCore};
-// use crate::common::ToBytesFromBytes; // Removed because it does not exist
+use crate::digest::DigestAlgorithm;
 
 pub trait Error: core::fmt::Debug {
     /// Convert error to a generic error kind
@@ -9,6 +8,12 @@ pub trait Error: core::fmt::Debug {
     /// can be converted to a set of generic errors upon which generic
     /// code can act.
     fn kind(&self) -> ErrorKind;
+}
+
+impl Error for core::convert::Infallible {
+    fn kind(&self) -> ErrorKind {
+        match *self {}
+    }
 }
 
 pub trait ErrorType {
@@ -31,75 +36,54 @@ pub enum ErrorKind {
     Other,
 }
 
-/// Trait for ECDSA key generation.
-///
-/// This trait defines the methods required for generating ECDSA key pairs.
-pub trait EcdsaKeyGen: ErrorType {
-    type PrivateKeyOut<'a>; // Removed ToBytesFromBytes bound
-    type PublicKeyOut<'a>; // Removed ToBytesFromBytes bound
 
-    /// Generates an ECDSA key pair.
-    ///
-    /// # Parameters
-    /// - `rng`: The entropy source.
-    ///
-    /// # Returns
-    /// A result containing the generated private and public keys, or an error.    
-    fn generate_key_pair<R: RngCore + CryptoRng>(
+/// Trait for ECDSA key generation over a specific elliptic curve.
+pub trait EcdsaKeyGen: ErrorType {
+    type PrivateKey<'a>;
+    type PublicKey<'a>;
+
+    fn generate_key_pair<R: rand_core::RngCore + rand_core::CryptoRng>(
         &mut self,
         rng: R,
-        priv_key: &mut Self::PrivateKeyOut<'_>,
-        pub_key: &mut Self::PublicKeyOut<'_>,
+        priv_key: &mut Self::PrivateKey<'_>,
+        pub_key: &mut Self::PublicKey<'_>,
     ) -> Result<(), Self::Error>;
 }
 
-/// Trait for ECDSA signing.
-///
-/// This trait defines the methods required for signing messages using ECDSA.
-pub trait EcdsaSign: ErrorType {
-    type PrivateKeyIn<'a>;
-    type Message;
+/// Trait for ECDSA signing using a digest algorithm.
+pub trait EcdsaSign<C: DigestAlgorithm>: ErrorType {
+    type PrivateKey<'a>;
     type Signature;
 
-    /// Signs a message hash using the private key and elliptic curve.
+    /// Signs a digest produced by a compatible hash function.
     ///
     /// # Parameters
-    /// - `private_key`: The private key to use for signing.
-    /// - `message_hash`: The hash of the message to sign.
-    ///
-    /// # Returns
-    /// A result containing the generated signature, or an error.    
-    fn sign<R>(
+    /// - `private_key`: The private key used for signing.
+    /// - `digest`: The digest output from a hash function.
+    /// - `rng`: A cryptographically secure random number generator.
+    fn sign<R: rand_core::RngCore + rand_core::CryptoRng>(
         &mut self,
-        private_key: &Self::PrivateKeyIn<'_>,
-        message: Self::Message,
+        private_key: &Self::PrivateKey<'_>,
+        digest: C::DigestOutput,
         rng: R,
-    ) -> Result<Self::Signature, Self::Error>
-    where
-        R: RngCore + CryptoRng;
+    ) -> Result<Self::Signature, Self::Error>;
 }
 
-/// Trait for ECDSA verification.
-///
-/// This trait defines the methods required for verifying ECDSA signatures.
-pub trait EcdsaVerify: ErrorType {
+/// Trait for ECDSA signature verification using a digest algorithm.
+pub trait EcdsaVerify<C: DigestAlgorithm>: ErrorType {
     type PublicKey;
-    type Message;
     type Signature;
 
-    /// Verifies an ECDSA signature.
+    /// Verifies a signature against a digest.
     ///
     /// # Parameters
-    /// - `public_key`: The public key to use for verification.
-    /// - `message_hash`: The hash of the message to verify.
+    /// - `public_key`: The public key used for verification.
+    /// - `digest`: The digest output from a hash function.
     /// - `signature`: The signature to verify.
-    ///
-    /// # Returns
-    /// A result indicating whether the signature is valid, or an error.    
     fn verify(
         &mut self,
         public_key: &Self::PublicKey,
-        message: Self::Message,
+        digest: C::DigestOutput,
         signature: &Self::Signature,
     ) -> Result<(), Self::Error>;
 }
