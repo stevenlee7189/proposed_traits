@@ -9,6 +9,8 @@ pub mod spi;
 pub use digital::{SimulatedInputPin, SimulatedOutputPin};
 pub use spi::SimulatedSpiBus;
 
+
+
 pub struct SimulatedPac {
     pub busy_pin: SimulatedInputPin,
     pub reset_pin: SimulatedOutputPin,
@@ -112,6 +114,7 @@ where
 #[cfg(test)]
 mod tests {
     use crate::i3c::DummyI3cController;
+
 
     use super::*;
 

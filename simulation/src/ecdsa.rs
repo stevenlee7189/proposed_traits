@@ -30,7 +30,7 @@ impl EcdsaSign<Sha2_256> for P256Signer {
     fn sign<R: rand_core::RngCore + rand_core::CryptoRng>(
         &mut self,
         private_key: &Self::PrivateKey<'_>,
-        digest: [u8; 32],
+        digest: <Sha2_256 as DigestAlgorithm>::DigestOutput,
         _rng: R,
     ) -> Result<Self::Signature, Self::Error> {
         Ok(private_key.sign_prehash(&digest).unwrap())
@@ -53,7 +53,7 @@ impl EcdsaVerify<Sha2_256> for P256Verifier {
     fn verify(
         &mut self,
         public_key: &Self::PublicKey,
-        digest: [u8; 32],
+        digest: <Sha2_256 as DigestAlgorithm>::DigestOutput,
         signature: &Self::Signature,
     ) -> Result<(), Self::Error> {
         public_key.verify_prehash(&digest, signature).unwrap();
