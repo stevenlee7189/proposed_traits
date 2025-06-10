@@ -1,3 +1,58 @@
+//! # Design Considerations
+//!
+//! This module defines traits and error types for abstracting system-level
+//! clock and reset control operations. The design emphasizes **flexibility**,
+//! **composability**, and **extensibility** to support a wide range of hardware
+//! platforms and use cases.
+//!
+//! ## Flexibility
+//!
+//! - **Platform Independence**: The traits abstract hardware-specific operations,
+//!   allowing implementations to target different platforms without modifying
+//!   consumer code.
+//! - **Custom Identifiers and Configurations**: Associated types like `ClockId`,
+//!   `ClockConfig`, and `ResetId` allow implementers to define identifiers and
+//!   configurations that match their hardware model.
+//! - **Error Abstraction**: The `Error` trait and `ErrorKind` enum decouple
+//!   error handling from specific implementations, enabling generic code to
+//!   respond to common failure modes while supporting detailed diagnostics.
+//!
+//! ## Composability
+//!
+//! - **Thread Safety**: Trait bounds (`Send + Sync`) ensure that implementations
+//!   can be safely shared across threads, making them suitable for concurrent
+//!   or asynchronous environments.
+//! - **Unified Error Handling**: The `ErrorType` supertrait provides a consistent
+//!   interface for accessing error types, enabling integration with other traits
+//!   and systems.
+//! - **Non-Exhaustive ErrorKind**: The `#[non_exhaustive]` attribute on `ErrorKind`
+//!   allows future expansion without breaking existing code, supporting long-term
+//!   composability.
+//!
+//! ## Extensibility
+//!
+//! - **Custom Error Types**: Implementers can define their own error types and
+//!   map them to `ErrorKind`, enabling rich, context-specific error reporting
+//!   while maintaining compatibility with generic consumers.
+//! - **Vendor-Specific Configuration**: The `ClockConfig` type supports complex
+//!   configuration structures such as PLL settings, dividers, or source selectors.
+//! - **Partial Implementations**: While all trait methods are required, implementers
+//!   can provide no-op or stub implementations for unsupported features, enabling
+//!   partial functionality where appropriate.
+//!
+//! ## Summary
+//!
+//! This design provides a robust foundation for building portable, maintainable,
+//! and scalable hardware abstraction layers. By leveraging Rust’s trait system,
+//! it enables:
+//!
+//! - Reuse of generic drivers across platforms.
+//! - Simplified testing and mocking.
+//! - Clear contracts between hardware abstraction and higher-level logic.
+
+use core::time::Duration;
+
+
 ///
 /// This represents a common set of syste, control  operation errors. Implementations are
 /// free to define more specific or additional error types. However, by providing
@@ -15,6 +70,7 @@ pub enum ErrorKind {
     PermissionDenied,
     Timeout,
 }
+
 
 
 
@@ -168,7 +224,7 @@ pub trait ResetControl: Send + Sync + ErrorType {
     /// # Returns
     ///
     /// * `Result<(), Self::Error>` - Ok if the operation is successful, or an error of type `Self::Error`.
-    fn reset_pulse(&self, reset_id: &Self::ResetId, duration_us: u64) -> Result<(), Self::Error>;
+    fn reset_pulse(&self, reset_id: &Self::ResetId, duration: Duration) -> Result<(), Self::Error>;
 
     /// Checks if the reset signal is currently asserted for the specified reset ID.
     ///
