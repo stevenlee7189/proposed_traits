@@ -16,3 +16,4 @@ pub mod system_control;
 pub mod client;
 pub mod service;
 pub mod otp;
+pub mod symm_cipher;

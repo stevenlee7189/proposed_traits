@@ -52,7 +52,6 @@
 
 use core::time::Duration;
 
-
 ///
 /// This represents a common set of syste, control  operation errors. Implementations are
 /// free to define more specific or additional error types. However, by providing
@@ -70,9 +69,6 @@ pub enum ErrorKind {
     PermissionDenied,
     Timeout,
 }
-
-
-
 
 pub trait Error: core::fmt::Debug {
     /// Convert error to a generic error kind
@@ -98,7 +94,6 @@ pub trait ErrorType {
     /// Error type.
     type Error: Error;
 }
-
 
 /// Trait for clock control operations.
 /// Abstracts enabling, disabling, and configuring clocks for peripherals or system components.
@@ -140,11 +135,8 @@ pub trait ClockControl: Send + Sync + ErrorType {
     /// # Returns
     ///
     /// * `Result<(), Self::Error>` - Ok if the operation is successful, or an error of type `Self::Error`.
-    fn set_frequency(
-        &self,
-        clock_id: &Self::ClockId,
-        frequency_hz: u64,
-    ) -> Result<(), Self::Error>;
+    fn set_frequency(&self, clock_id: &Self::ClockId, frequency_hz: u64)
+        -> Result<(), Self::Error>;
 
     /// Gets the current frequency of a clock (in Hz).
     ///

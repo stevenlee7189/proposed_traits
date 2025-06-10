@@ -1,85 +1,185 @@
-use crate::serde::Serde;
 
-/// Error kind.
-///
-/// This represents a common set of digest operation errors. Implementations are
-/// free to define more specific or additional error types. However, by providing
-/// a mapping to these common errors, generic code can still react to them.
+use crate::common::{FromBytes , ToBytes};
+use core::fmt::Debug;
+
+/// Marker trait for all cipher modes.
+pub trait CipherMode: core::fmt::Debug + Clone + Copy {}
+
+/// Marker trait for block cipher modes (e.g., CBC, CTR).
+pub trait BlockCipherMode: CipherMode {}
+
+/// Marker trait for AEAD modes (e.g., GCM, CCM).
+pub trait AeadCipherMode: CipherMode {}
+
+/// Marker trait for stream cipher modes (e.g., ChaCha20).
+pub trait StreamCipherMode: CipherMode {}
+
+
+/// Common error kinds for symmetric cipher operations.
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[non_exhaustive]
 pub enum ErrorKind {
-     /// Failed to initialize the hash computation context.
+    /// Failed to initialize the cipher context.
     InitializationError,
 
-    /// General hardware failure during hash computation.
+    /// General hardware failure during cipher operation.
     HardwareFailure,
 
-    /// Insufficient permissions to access the hardware or perform the Mac computation.
+    /// Insufficient permissions to access hardware or perform the operation.
     PermissionDenied,
 
-    /// The Mac operation context has not been initialized.
+    /// The cipher context is in an invalid or uninitialized state.
     InvalidState,
+
+    /// The input data is invalid (e.g., wrong length or format).
+    InvalidInput,
+
+    /// The specified algorithm or mode is not supported.
+    UnsupportedAlgorithm,
+
+    /// Key or IV is invalid or missing.
+    KeyError,
 }
 
-pub trait Error: core::fmt::Debug {
-    /// Convert error to a generic error kind
-    ///
-    /// By using this method, errors freely defined by HAL implementations
-    /// can be converted to a set of generic errors upon which generic
-    /// code can act.
+/// Trait for converting implementation-specific errors into a generic [`ErrorKind`].
+pub trait Error: Debug {
+    /// Returns a generic error kind corresponding to the specific error.
     fn kind(&self) -> ErrorKind;
 }
 
+/// Trait for associating a type with an error type.
 pub trait ErrorType {
-    /// Error type.
+    /// The associated error type.
     type Error: Error;
 }
 
-pub trait SymmCipherCtrl: ErrorType {
-    type InitParams<'a>: where Self: 'a;
-    type OpContext<'a>: SymmetricCipherOp where Self: 'a;
+/// Trait for symmetric cipher algorithms.
+pub trait SymmetricCipher: ErrorType {
+    /// The key type used for initialization.
+    type Key: FromBytes + ToBytes;
 
-    /// Init instance of the crypto function with the given context.
-    ///
-    /// # Parameters
-    ///
-    /// - `init_params`: The context or configuration parameters for the crypto function.
-    ///
-    /// # Returns
-    ///
-    /// A new instance of the hash function.
-    fn init<'a>(&'a mut self, init_params: Self::InitParams<'a>) -> Result<Self::OpContext<'a>, Self::Error>;
+    /// The nonce or IV type.
+    type Nonce: FromBytes + ToBytes;
+
+    /// The plaintext and ciphertext types.
+    type PlainText: FromBytes + ToBytes;
+    type CipherText: FromBytes + ToBytes;
 }
 
+/// Trait for initializing a cipher with a specific mode.
+pub trait CipherInit<M: CipherMode>: SymmetricCipher {
+    /// The operational context for performing encryption/decryption.
+    type CipherContext<'a>: CipherOp<M>
+    where
+        Self: 'a;
 
-pub trait SymmetricCipherOp {
-
-    /// Associated type for the plaintext.
-    type PlainText : Serde;
-
-    /// Associated type for the ciphertext.
-    type Ciphertext: Serde;
-
-
-    /// Encrypt the given plaintext.
+    /// Initializes the cipher with the given parameters.
     ///
     /// # Parameters
     ///
-    /// - `plaintext`: The data to be encrypted.
+    /// - `key`: A reference to the key used for the cipher.
+    /// - `nonce`: A reference to the nonce or IV used for the cipher.
+    /// - `mode`: The cipher mode to use.
     ///
     /// # Returns
     ///
-    /// A `Result` containing the ciphertext on success, or a `Self::Error` on failure.
-    fn encrypt(&mut self, plaintext: Self::Plaintext) -> Result<Self::Ciphertext, Self::Error>;
+    /// A result containing the operational context or an error.
+    fn init<'a>(
+        &'a mut self,
+        key: &Self::Key,
+        nonce: &Self::Nonce,
+        mode: M,
+    ) -> Result<Self::CipherContext<'a>, Self::Error>;
+}
 
-    /// Decrypt the given ciphertext.
+/// Trait for basic encryption/decryption operations.
+pub trait CipherOp<M: CipherMode>: SymmetricCipher + ErrorType {
+    /// Encrypts the given plaintext.
     ///
     /// # Parameters
     ///
-    /// - `ciphertext`: The data to be decrypted.
+    /// - `plaintext`: The data to encrypt.
     ///
     /// # Returns
     ///
-    /// A `Result` containing the plaintext on success, or a `Self::Error` on failure.
-    fn decrypt(&mut self, ciphertext: Self::Ciphertext) -> Result<Self::Plaintext, Self::Error>;
+    /// A result containing the ciphertext or an error.
+    fn encrypt(&mut self, plaintext: Self::PlainText) -> Result<Self::CipherText, Self::Error>;
+
+    /// Decrypts the given ciphertext.
+    ///
+    /// # Parameters
+    ///
+    /// - `ciphertext`: The data to decrypt.
+    ///
+    /// # Returns
+    ///
+    /// A result containing the plaintext or an error.
+    fn decrypt(&mut self, ciphertext: Self::CipherText) -> Result<Self::PlainText, Self::Error>;
+}
+
+/// Optional trait for cipher contexts that support resetting to their initial state.
+pub trait ResettableCipherOp: ErrorType {
+    /// Resets the cipher context.
+    ///
+    /// # Returns
+    ///
+    /// A result indicating success or failure.
+    fn reset(&mut self) -> Result<(), Self::Error>;
+}
+
+/// Optional trait for cipher contexts that support rekeying.
+pub trait CipherRekey<K>: ErrorType {
+    /// Rekeys the cipher context with a new key.
+    ///
+    /// # Parameters
+    ///
+    /// - `new_key`: A reference to the new key.
+    ///
+    /// # Returns
+    ///
+    /// A result indicating success or failure.
+    fn rekey(&mut self, new_key: &K) -> Result<(), Self::Error>;
+}
+
+/// Trait for AEAD operations (e.g., AES-GCM).
+pub trait AeadCipherOp: SymmetricCipher + ErrorType {
+    /// The associated data type for AEAD.
+    type AssociatedData: FromBytes + ToBytes;
+
+    /// The tag type for AEAD.
+    type Tag: FromBytes + ToBytes;
+
+    /// Encrypts the given plaintext with associated data.
+    ///
+    /// # Parameters
+    ///
+    /// - `plaintext`: The data to encrypt.
+    /// - `associated_data`: The associated data to authenticate.
+    ///
+    /// # Returns
+    ///
+    /// A result containing the ciphertext and authentication tag or an error.
+    fn encrypt_aead(
+        &mut self,
+        plaintext: Self::PlainText,
+        associated_data: Self::AssociatedData,
+    ) -> Result<(Self::CipherText, Self::Tag), Self::Error>;
+
+    /// Decrypts the given ciphertext with associated data and authentication tag.
+    ///
+    /// # Parameters
+    ///
+    /// - `ciphertext`: The data to decrypt.
+    /// - `associated_data`: The associated data to authenticate.
+    /// - `tag`: The authentication tag.
+    ///
+    /// # Returns
+    ///
+    /// A result containing the plaintext or an error.
+    fn decrypt_aead(
+        &mut self,
+        ciphertext: Self::CipherText,
+        associated_data: Self::AssociatedData,
+        tag: Self::Tag,
+    ) -> Result<Self::PlainText, Self::Error>;
 }

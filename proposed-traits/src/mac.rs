@@ -1,123 +1,113 @@
-/// Error kind.
-///
-/// This represents a common set of digest operation errors. Implementations are
-/// free to define more specific or additional error types. However, by providing
-/// a mapping to these common errors, generic code can still react to them.
+use core::fmt::Debug;
+
+/// Common error kinds for MAC operations (reused from digest operations).
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[non_exhaustive]
 pub enum ErrorKind {
-    /// The input data length is not valid for the hash function.
+    /// The input data length is not valid for the MAC function.
     InvalidInputLength,
-
-    /// The specified hash algorithm is not supported by the hardware or software implementation.
+    /// The specified MAC algorithm is not supported by the hardware or software implementation.
     UnsupportedAlgorithm,
-
-    /// Failed to allocate memory for the hash computation.
+    /// Failed to allocate memory for the MAC computation.
     MemoryAllocationFailure,
-
-    /// Failed to initialize the hash computation context.
+    /// Failed to initialize the MAC computation context.
     InitializationError,
-
-    /// Error occurred while updating the hash computation with new data.
+    /// Error occurred while updating the MAC computation with new data.
     UpdateError,
-
-    /// Error occurred while finalizing the hash computation.
+    /// Error occurred while finalizing the MAC computation.
     FinalizationError,
-
-    /// The hardware accelerator is busy and cannot process the hash computation.
+    /// The hardware accelerator is busy and cannot process the MAC computation.
     Busy,
-
-    /// General hardware failure during hash computation.
+    /// General hardware failure during MAC computation.
     HardwareFailure,
-
-    /// The specified output size is not valid for the hash function.
+    /// The specified output size is not valid for the MAC function.
     InvalidOutputSize,
-
-    /// Insufficient permissions to access the hardware or perform the Mac computation.
+    /// Insufficient permissions to access the hardware or perform the MAC computation.
     PermissionDenied,
-
-    /// The Mac operation context has not been initialized.
-    InvalidState,
+    /// The MAC computation context has not been initialized.
+    NotInitialized,
 }
 
-pub trait Error: core::fmt::Debug {
-    /// Convert error to a generic error kind
-    ///
-    /// By using this method, errors freely defined by Algo implementations
-    /// can be converted to a set of generic errors upon which generic
-    /// code can act.
+/// Trait for converting implementation-specific errors into a common error kind.
+pub trait Error: Debug {
+    /// Returns a generic error kind corresponding to the specific error.
     fn kind(&self) -> ErrorKind;
 }
 
 impl Error for core::convert::Infallible {
-    /// Convert error to a generic Mac error kind.
-    ///
-    /// By using this method, Mac errors freely defined by Algo implementations
-    /// can be converted to a set of generic I2C errors upon which generic
-    /// code can act.    
     fn kind(&self) -> ErrorKind {
         match *self {}
     }
 }
 
+/// Trait for types that associate with a specific error type.
 pub trait ErrorType {
-    /// Error type.
+    /// The associated error type.
     type Error: Error;
 }
 
-pub trait McCtrlReset: ErrorType {
-    /// Reset instance to its initial state.
+/// Trait representing a MAC algorithm and its output characteristics.
+pub trait MacAlgorithm {
+    /// The number of bits in the MAC output.
+    const OUTPUT_BITS: usize;
+
+    /// The type representing the MAC output.
+    type MacOutput;
+
+    /// The type representing the key used for MAC computation.
+    type Key;
+}
+
+/// Trait for initializing a MAC operation for a specific algorithm.
+pub trait MacInit<A: MacAlgorithm>: ErrorType {
+    /// The type representing the operational context for the MAC.
+    type OpContext<'a>: MacOp<Output = A::MacOutput>
+    where
+        Self: 'a;
+
+    /// Initializes the MAC operation with the specified algorithm and key.
+    ///
+    /// # Parameters
+    ///
+    /// - `algo`: A zero-sized type representing the MAC algorithm to use.
+    /// - `key`: A reference to the key used for the MAC computation.
     ///
     /// # Returns
     ///
-    /// A `Result` indicating success or failure. On success, returns `Ok(())`. On failure, returns a `CryptoError`.    
+    /// A result containing the operational context for the MAC, or an error.
+    fn init<'a>(&'a mut self, algo: A, key: &A::Key) -> Result<Self::OpContext<'a>, Self::Error>;
+}
+
+/// Optional trait for resetting a MAC context to its initial state.
+pub trait MacCtrlReset: ErrorType {
+    /// Resets the MAC context.
+    ///
+    /// # Returns
+    ///
+    /// A result indicating success or failure.
     fn reset(&mut self) -> Result<(), Self::Error>;
 }
 
-pub trait MacInit: ErrorType {
-    type InitParams<'a>
-    where
-        Self: 'a;
-    type OpContext<'a>: MacOp
-    where
-        Self: 'a;
-
-    /// Init instance of the crypto function with the given context.
-    ///
-    /// # Parameters
-    ///
-    /// - `init_params`: The context or configuration parameters for the crypto function.
-    ///
-    /// # Returns
-    ///
-    /// A new instance of the hash function.
-    fn init<'a>(
-        &'a mut self,
-        init_params: Self::InitParams<'a>,
-    ) -> Result<Self::OpContext<'a>, Self::Error>;
-}
-
-/// Message Authentication Code Operation
+/// Trait for performing MAC operations.
 pub trait MacOp: ErrorType {
-    /// Update state using provided input data.
+    /// The type of the MAC output.
+    type Output;
+
+    /// Updates the MAC state with the provided input data.
     ///
     /// # Parameters
     ///
-    /// - `input`: The input data to be hashed. This can be any type that implements `AsRef<[u8]>`.
+    /// - `input`: A byte slice containing the data to authenticate.
     ///
     /// # Returns
     ///
-    /// A `Result` indicating success or failure. On success, returns `Ok(())`. On failure, returns a `CryptoError`.    
+    /// A result indicating success or failure.
     fn update(&mut self, input: &[u8]) -> Result<(), Self::Error>;
 
-    /// Finalize the computation and produce the output.
-    ///
-    /// # Parameters
-    ///
-    /// - `out`: A mutable slice to store the hash output. The length of the slice must be at least `MAX_OUTPUT_SIZE`.
+    /// Finalizes the MAC computation and returns the result.
     ///
     /// # Returns
     ///
-    /// A `Result` indicating success or failure. On success, returns `Ok(())`. On failure, returns a `CryptoError`.    
-    fn finalize(&mut self, tag: &mut [u8]) -> Result<(), Self::Error>;
+    /// A result containing the MAC output, or an error.
+    fn finalize(self) -> Result<Self::Output, Self::Error>;
 }
