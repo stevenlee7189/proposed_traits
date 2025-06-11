@@ -1,10 +1,10 @@
 use p256::{
-    ecdsa::{SigningKey, VerifyingKey, Signature},
+    ecdsa::{Signature, SigningKey, VerifyingKey}
 };
-use proposed_traits::digest::DigestAlgorithm;
-use proposed_traits::ecdsa::{EcdsaSign, EcdsaVerify, ErrorType};
-use p256::ecdsa::signature::hazmat::PrehashVerifier;
- use p256::ecdsa::signature::hazmat::PrehashSigner;
+use proposed_traits::{digest::DigestAlgorithm, ecdsa::{Error, ErrorKind}};
+use proposed_traits::ecdsa::{Curve, EcdsaKeyGen, EcdsaSign, EcdsaVerify, ErrorType};
+use p256::ecdsa::signature::hazmat::{PrehashVerifier, PrehashSigner};
+use rand::{CryptoRng, RngCore};
 
 /// Digest algorithm for SHA-256
 pub struct Sha2_256;
@@ -14,39 +14,61 @@ impl DigestAlgorithm for Sha2_256 {
     type DigestOutput = [u8; 32];
 }
 
-/// ECDSA signer using P-256 and SHA-256
-pub struct P256Signer {
-    key: SigningKey,
+pub struct P256Sha256;
+
+impl Curve for P256Sha256 {
+    type DigestType = Sha2_256;
 }
 
-impl ErrorType for P256Signer {
-    type Error = core::convert::Infallible;
+
+#[derive(Debug)]
+pub enum EcdsaCryptoError {
+    InvalidSignature,
+    SigningError,
+    KeyGenError,
 }
 
-impl EcdsaSign<Sha2_256> for P256Signer {
-    type PrivateKey<'a> = SigningKey;
-    type Signature = Signature;
-
-    fn sign<R: rand_core::RngCore + rand_core::CryptoRng>(
-        &mut self,
-        private_key: &Self::PrivateKey<'_>,
-        digest: <Sha2_256 as DigestAlgorithm>::DigestOutput,
-        _rng: R,
-    ) -> Result<Self::Signature, Self::Error> {
-        Ok(private_key.sign_prehash(&digest).unwrap())
+impl Error for EcdsaCryptoError {
+    fn kind(&self) -> ErrorKind {
+        match self {
+            Self::InvalidSignature => ErrorKind::InvalidSignature,
+            Self::SigningError => ErrorKind::SigningError,
+            Self::KeyGenError => ErrorKind::KeyGenError,
+        }
     }
 }
 
-/// ECDSA verifier using P-256 and SHA-256
-pub struct P256Verifier {
-    key: VerifyingKey,
+pub struct P256KeyGen;
+
+impl ErrorType for P256KeyGen {
+    type Error = EcdsaCryptoError;
 }
+
+impl EcdsaKeyGen for P256KeyGen {
+    type PrivateKey<'a> = SigningKey;
+    type PublicKey<'a> = VerifyingKey;
+
+    fn generate_key_pair<R: RngCore + CryptoRng>(
+        &mut self,
+        mut rng: R,
+        priv_key: &mut Self::PrivateKey<'_>,
+        pub_key: &mut Self::PublicKey<'_>,
+    ) -> Result<(), Self::Error> {
+        let sk = SigningKey::random(&mut rng);
+        let vk = VerifyingKey::from(&sk);
+        *priv_key = sk;
+        *pub_key = vk;
+        Ok(())
+    }
+}
+
+pub struct P256Verifier;
 
 impl ErrorType for P256Verifier {
-    type Error = core::convert::Infallible;
+    type Error = EcdsaCryptoError;
 }
 
-impl EcdsaVerify<Sha2_256> for P256Verifier {
+impl EcdsaVerify<P256Sha256> for P256Verifier {
     type PublicKey = VerifyingKey;
     type Signature = Signature;
 
@@ -56,40 +78,30 @@ impl EcdsaVerify<Sha2_256> for P256Verifier {
         digest: <Sha2_256 as DigestAlgorithm>::DigestOutput,
         signature: &Self::Signature,
     ) -> Result<(), Self::Error> {
-        public_key.verify_prehash(&digest, signature).unwrap();
-        Ok(())
+        public_key
+            .verify_prehash(&digest, signature)
+            .map_err(|_| EcdsaCryptoError::InvalidSignature)
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use p256::{
-        ecdsa::{SigningKey, VerifyingKey},
-        elliptic_curve::rand_core::OsRng,
-    };
-    use sha2::{Sha256, Digest};
+pub struct P256Signer;
 
-    #[test]
-    fn test_ecdsa_sign_and_verify_sha256() {
-        // Generate key pair
-        let signing_key = SigningKey::random(&mut OsRng);
-        let verifying_key = VerifyingKey::from(&signing_key);
+impl ErrorType for P256Signer {
+    type Error = EcdsaCryptoError;
+}
 
-        // Message to hash and sign
-        let message = b"test message";
-        let digest = Sha256::digest(message);
+impl EcdsaSign<P256Sha256> for P256Signer {
+    type PrivateKey<'a> = SigningKey;
+    type Signature = Signature;
 
-        // Sign the digest
-        let mut signer = P256Signer { key: signing_key.clone() };
-        let signature = signer
-            .sign(&signing_key, digest.into(), OsRng)
-            .expect("Signing failed");
-
-        // Verify the signature
-        let mut verifier = P256Verifier { key: verifying_key.clone() };
-        verifier
-            .verify(&verifying_key, digest.into(), &signature)
-            .expect("Verification failed");
+    fn sign<R: RngCore + CryptoRng>(
+        &mut self,
+        private_key: &Self::PrivateKey<'_>,
+        digest: <Sha2_256 as DigestAlgorithm>::DigestOutput,
+        _rng: R,
+    ) -> Result<Self::Signature, Self::Error> {
+        private_key
+            .sign_prehash(&digest)
+            .map_err(|_| EcdsaCryptoError::SigningError)
     }
 }

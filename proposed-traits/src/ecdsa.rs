@@ -36,6 +36,9 @@ pub enum ErrorKind {
     Other,
 }
 
+pub trait Curve {
+    type DigestType: DigestAlgorithm;
+}
 
 /// Trait for ECDSA key generation over a specific elliptic curve.
 pub trait EcdsaKeyGen: ErrorType {
@@ -51,7 +54,7 @@ pub trait EcdsaKeyGen: ErrorType {
 }
 
 /// Trait for ECDSA signing using a digest algorithm.
-pub trait EcdsaSign<C: DigestAlgorithm>: ErrorType {
+pub trait EcdsaSign<C: Curve>: ErrorType {
     type PrivateKey<'a>;
     type Signature;
 
@@ -64,13 +67,13 @@ pub trait EcdsaSign<C: DigestAlgorithm>: ErrorType {
     fn sign<R: rand_core::RngCore + rand_core::CryptoRng>(
         &mut self,
         private_key: &Self::PrivateKey<'_>,
-        digest: C::DigestOutput,
+        digest: <<C as Curve>::DigestType as DigestAlgorithm>::DigestOutput,
         rng: R,
     ) -> Result<Self::Signature, Self::Error>;
 }
 
 /// Trait for ECDSA signature verification using a digest algorithm.
-pub trait EcdsaVerify<C: DigestAlgorithm>: ErrorType {
+pub trait EcdsaVerify<C: Curve>: ErrorType {
     type PublicKey;
     type Signature;
 
@@ -83,7 +86,7 @@ pub trait EcdsaVerify<C: DigestAlgorithm>: ErrorType {
     fn verify(
         &mut self,
         public_key: &Self::PublicKey,
-        digest: C::DigestOutput,
+        digest: <<C as Curve>::DigestType as DigestAlgorithm>::DigestOutput,
         signature: &Self::Signature,
     ) -> Result<(), Self::Error>;
 }
