@@ -80,3 +80,37 @@ impl<'a> MacOp for HmacContext<'a> {
         Ok(result.into())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_hmac_sha256_mac_computation() {
+        // Sample key and message
+        let key = [0x0b; 32]; // 32-byte key
+        let message = b"The quick brown fox jumps over the lazy dog";
+
+        // Initialize the MAC engine
+        let mut engine = HmacEngine;
+        let mut context = engine
+            .init(HmacSha256, &key)
+            .expect("Failed to initialize HMAC context");
+
+        // Update with message
+        context.update(message).expect("Failed to update MAC");
+
+        // Finalize and get the MAC output
+        let mac = context.finalize().expect("Failed to finalize MAC");
+
+        // Expected HMAC-SHA256 output for this key/message pair
+        let expected = [
+            0xf7, 0xbc, 0x83, 0xf4, 0x30, 0x53, 0x84, 0x24,
+            0xb1, 0x4f, 0xb6, 0x9a, 0xc7, 0x7a, 0x4f, 0x3d,
+            0xb1, 0x0e, 0xd2, 0x4f, 0x09, 0x33, 0x8d, 0x3b,
+            0x73, 0x2c, 0xb2, 0x3c, 0x6e, 0xc4, 0x7b, 0xe2,
+        ];
+
+        assert_eq!(mac, expected, "MAC output does not match expected value");
+    }
+}
