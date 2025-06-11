@@ -43,15 +43,11 @@ pub trait RsaKeys {
 }
 
 pub trait RsaSignature {
-    type Signature;
+    type Signature : ToBytes + FromBytes;
 }
 
-pub trait RsaKeyGen: ErrorType + RsaKeys {
-    fn generate_keys(bits: RsaSize) -> Result<(Self::PrivateKey, Self::PublicKey), Self::Error>;
-}
 
-/// Trait for RSA signing operations.
-pub trait RsaSign: ErrorType + RsaKeys + RsaSignature {
+pub trait RsaMessage {
     /// Type representing the message to be signed.
     ///
     /// This associated type allows implementers to define the format and semantics
@@ -66,7 +62,16 @@ pub trait RsaSign: ErrorType + RsaKeys + RsaSignature {
     ///
     /// This design enables the trait to be adaptable across different platforms and
     /// use cases without enforcing a fixed message format or signing strategy.
-    type Message;
+    type Message: ToBytes + FromBytes;
+}
+
+
+pub trait RsaKeyGen: ErrorType + RsaKeys {
+    fn generate_keys(bits: RsaSize) -> Result<(Self::PrivateKey, Self::PublicKey), Self::Error>;
+}
+
+/// Trait for RSA signing operations.
+pub trait RsaSign: ErrorType + RsaKeys + RsaSignature + RsaMessage{
 
     /// Signs a message using the given private key and padding mode.
     ///
@@ -88,18 +93,7 @@ pub trait RsaSign: ErrorType + RsaKeys + RsaSignature {
 }
 
 /// Trait for RSA signature verification.
-pub trait RsaVerify: ErrorType + RsaKeys + RsaSignature {
-    /// Type representing the message to be verified.
-    ///
-    /// This associated type must implement `ToBytes` and `FromBytes`, ensuring that
-    /// the message can be serialized and deserialized for verification purposes.
-    ///
-    /// As with `RsaSign`, it is up to the implementer to define whether the message
-    /// represents a raw payload, a precomputed hash, or another form of data.
-    /// This allows the verification logic to align with the signing strategy and
-    /// platform-specific requirements.
-    type Message: ToBytes + FromBytes;
-
+pub trait RsaVerify: ErrorType + RsaKeys + RsaSignature + RsaMessage{
     /// Verifies a signature against a message and public key.
     ///
     /// # Arguments
