@@ -112,7 +112,7 @@ pub trait ClockControl: Send + Sync + ErrorType {
     /// # Returns
     ///
     /// * `Result<(), Self::Error>` - Ok if the operation is successful, or an error of type `Self::Error`.
-    fn enable(&self, clock_id: &Self::ClockId) -> Result<(), Self::Error>;
+    fn enable(&mut self, clock_id: &Self::ClockId) -> Result<(), Self::Error>;
 
     /// Disables a clock for the specified clock ID.
     ///
@@ -123,7 +123,7 @@ pub trait ClockControl: Send + Sync + ErrorType {
     /// # Returns
     ///
     /// * `Result<(), Self::Error>` - Ok if the operation is successful, or an error of type `Self::Error`.
-    fn disable(&self, clock_id: &Self::ClockId) -> Result<(), Self::Error>;
+    fn disable(&mut self, clock_id: &Self::ClockId) -> Result<(), Self::Error>;
 
     /// Sets the frequency of a clock (in Hz).
     ///
@@ -135,7 +135,7 @@ pub trait ClockControl: Send + Sync + ErrorType {
     /// # Returns
     ///
     /// * `Result<(), Self::Error>` - Ok if the operation is successful, or an error of type `Self::Error`.
-    fn set_frequency(&self, clock_id: &Self::ClockId, frequency_hz: u64)
+    fn set_frequency(&mut self, clock_id: &Self::ClockId, frequency_hz: u64)
         -> Result<(), Self::Error>;
 
     /// Gets the current frequency of a clock (in Hz).
@@ -161,7 +161,7 @@ pub trait ClockControl: Send + Sync + ErrorType {
     ///
     /// * `Result<(), Self::Error>` - Ok if the operation is successful, or an error of type `Self::Error`.
     fn configure(
-        &self,
+        &mut self,
         clock_id: &Self::ClockId,
         config: Self::ClockConfig,
     ) -> Result<(), Self::Error>;
@@ -193,7 +193,7 @@ pub trait ResetControl: Send + Sync + ErrorType {
     /// # Returns
     ///
     /// * `Result<(), Self::Error>` - Ok if the operation is successful, or an error of type `Self::Error`.
-    fn reset_assert(&self, reset_id: &Self::ResetId) -> Result<(), Self::Error>;
+    fn reset_assert(&mut self, reset_id: &Self::ResetId) -> Result<(), Self::Error>;
 
     /// Deasserts the reset signal for the specified reset ID (releases the component from reset).
     ///
@@ -204,7 +204,7 @@ pub trait ResetControl: Send + Sync + ErrorType {
     /// # Returns
     ///
     /// * `Result<(), Self::Error>` - Ok if the operation is successful, or an error of type `Self::Error`.
-    fn reset_deassert(&self, reset_id: &Self::ResetId) -> Result<(), Self::Error>;
+    fn reset_deassert(&mut self, reset_id: &Self::ResetId) -> Result<(), Self::Error>;
 
     /// Performs a pulse reset (asserts then deasserts) with a specified duration (in microseconds).
     ///
@@ -216,7 +216,7 @@ pub trait ResetControl: Send + Sync + ErrorType {
     /// # Returns
     ///
     /// * `Result<(), Self::Error>` - Ok if the operation is successful, or an error of type `Self::Error`.
-    fn reset_pulse(&self, reset_id: &Self::ResetId, duration: Duration) -> Result<(), Self::Error>;
+    fn reset_pulse(&mut self, reset_id: &Self::ResetId, duration: Duration) -> Result<(), Self::Error>;
 
     /// Checks if the reset signal is currently asserted for the specified reset ID.
     ///
