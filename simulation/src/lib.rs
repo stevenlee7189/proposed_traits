@@ -5,7 +5,7 @@ pub mod dispatcher;
 pub mod i2c_target;
 pub mod i3c;
 pub mod spi;
-
+pub mod mac;
 pub use digital::{SimulatedInputPin, SimulatedOutputPin};
 pub use spi::SimulatedSpiBus;
 

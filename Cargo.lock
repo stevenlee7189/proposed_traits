@@ -393,6 +393,7 @@ dependencies = [
  "drivers",
  "embedded-hal",
  "embedded-hal-bus",
+ "hmac",
  "p256",
  "proposed-traits",
  "rand",
