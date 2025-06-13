@@ -109,5 +109,5 @@ pub trait MacOp: ErrorType {
     /// # Returns
     ///
     /// A result containing the MAC output, or an error.
-    fn finalize(self) -> Result<Self::Output, Self::Error>;
+    fn finalize(&mut self) -> Result<Self::Output, Self::Error>;
 }
