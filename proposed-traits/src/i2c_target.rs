@@ -1,5 +1,14 @@
 use embedded_hal::i2c::ErrorType as I2CErrorType;
 
+/// Direction of an I2C transaction.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TransactionDirection {
+    /// Write transaction (controller writing to target).
+    Write,
+    /// Read transaction (controller reading from target).
+    Read,
+}
+
 /// A convenience trait alias that represents a fully-featured I2C target device.
 ///
 /// This trait combines all the core and extended I2C target traits into a single interface:
@@ -55,6 +64,7 @@ pub trait I2CCoreTarget: I2CErrorType {
     ///
     /// # Arguments
     ///
+    /// * `direction` - Indicates whether the upcoming transaction is a Read or Write.
     /// * `repeated` - A boolean flag indicating whether this transaction is a repeated start (`true`)
     ///                or a fresh start (`false`). A repeated start means the controller has not
     ///                released the bus between transactions.
@@ -77,8 +87,8 @@ pub trait I2CCoreTarget: I2CErrorType {
     ///
     /// # Example
     ///
-    /// ```rust
-    /// fn on_transaction_start(&mut self, repeated: bool) {
+    /// ```rust,ignore
+    /// fn on_transaction_start(&mut self, direction: TransactionDirection, repeated: bool) {
     ///     if repeated {
     ///         // Continue using previous state
     ///     } else {
@@ -86,7 +96,7 @@ pub trait I2CCoreTarget: I2CErrorType {
     ///     }
     /// }
     /// ```
-    fn on_transaction_start(&mut self, repeated: bool);
+    fn on_transaction_start(&mut self, direction: TransactionDirection, repeated: bool);
 
     /// Optional: handle stop condition or reset.
     ///
